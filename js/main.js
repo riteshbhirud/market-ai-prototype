@@ -14,7 +14,12 @@ async function loadDemoData() {
   return data;
 }
 
-async function render(data) {
+async function loadTestData(filename) {
+  const data = await fetch(`data/${filename}`).then((r) => r.json());
+  return data;
+}
+
+async function render(data, usePresetInterpretation = false, presetInterpretationFileName = "") {
   currentData = data;
   drawChart(data);
   drawLegend(data);
@@ -25,7 +30,8 @@ async function render(data) {
   if (panel) {
     panel.innerHTML = "<p class=\"interpretation-loading\">Loading interpretation…</p>";
   }
-  const interpretation = await getInterpretation(data);
+  const interpretation = await getInterpretation(data, usePresetInterpretation, presetInterpretationFileName);
+  console.log(interpretation)
   loadAI(condition, interpretation);
 }
 
@@ -110,6 +116,10 @@ function setupDataControls() {
     <div class="data-source-label">Data source</div>
     <div class="data-source-buttons">
       <button type="button" id="load-demo">Use demo data</button>
+      <button type="button" id="load-test-7">Use grade 7 test data</button>
+      <button type="button" id="load-test-8">Use grade 8 test data</button>
+      <button type="button" id="load-test-9">Use grade 9 test data</button>
+      <button type="button" id="load-test-all-grades">Use all grades test data</button>
       <button type="button" id="gen-random">Generate random data</button>
     </div>
     <p class="data-source-hint">Demo data is fixed. Random data is regenerated each time (same schema).</p>
@@ -117,19 +127,40 @@ function setupDataControls() {
 
   document.getElementById("load-demo").addEventListener("click", async () => {
     const data = await loadDemoData();
-    await render(data);
+    await render(data, false, "");
+  });
+
+  document.getElementById("load-test-7").addEventListener("click", async () => {
+    const data = await loadTestData("test_data/grade_7_original.json");
+    await render(data, true, "grade_7_interpretation.json");
+  });
+
+  document.getElementById("load-test-8").addEventListener("click", async () => {
+    const data = await loadTestData("test_data/grade_8_original.json");
+    await render(data, true, "grade_8_interpretation.json");
+  });
+
+  document.getElementById("load-test-9").addEventListener("click", async () => {
+    const data = await loadTestData("test_data/grade_9_original.json");
+    await render(data, true, "grade_9_interpretation.json");
+  });
+
+  document.getElementById("load-test-all-grades").addEventListener("click", async () => {
+    const data = await loadTestData("test_data/all_grades_original.json");
+    await render(data, false, "");
   });
 
   document.getElementById("gen-random").addEventListener("click", async () => {
     const data = generateMarketData({ n: 18, seed: Date.now() % 1e6 });
-    await render(data);
+    await render(data, false, "");
   });
 }
 
+// render initially with loadDemoData
 async function init() {
   const data = await loadDemoData();
   setupDataControls();
-  render(data);
+  render(data, false, "");
 }
 
 init();

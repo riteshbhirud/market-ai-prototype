@@ -12,9 +12,10 @@ export function loadAI(condition, interpretation) {
   const alts = interpretation.alternatives && interpretation.alternatives.length ? interpretation.alternatives : ["No alternative view generated."];
   const hasScot = interpretation.plan || (interpretation.reasoning_steps && interpretation.reasoning_steps.length > 0);
   const planHtml = hasScot && interpretation.plan ? `<section class="interpretation-section"><h4>Plan</h4><p>${interpretation.plan}</p></section>` : "";
-  const reasoningHtml = hasScot && interpretation.reasoning_steps && interpretation.reasoning_steps.length
-    ? `<section class="interpretation-section"><h4>Reasoning steps</h4><ol>${interpretation.reasoning_steps.map((s) => `<li>${s}</li>`).join("")}</ol></section>`
-    : "";
+  // const reasoningHtml = hasScot && interpretation.reasoning_steps && interpretation.reasoning_steps.length
+  //   ? `<section class="interpretation-section"><h4>Reasoning steps</h4><ol>${interpretation.reasoning_steps.map((s) => `<li>${s}</li>`).join("")}</ol></section>`
+  //   : "";
+  const reasoningHtml = ""
 
   if (condition === "control") {
     panel.innerHTML = `
@@ -28,9 +29,9 @@ export function loadAI(condition, interpretation) {
   if (condition === "inspectable") {
     panel.innerHTML = `
       <h3>Interpretation</h3>
+      <p class="interpretation-summary">${interpretation.summary}</p>
       ${planHtml}
       ${reasoningHtml}
-      <p class="interpretation-summary">${interpretation.summary}</p>
       <section class="interpretation-section">
         <h4>Evidence</h4>
         <ul>${(interpretation.evidence || []).map((e) => `<li>${e}</li>`).join("")}</ul>

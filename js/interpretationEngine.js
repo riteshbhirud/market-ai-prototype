@@ -68,8 +68,8 @@ export function interpret(data) {
     sales.length >= 2
       ? `Recent marketplace signals suggest a central range around $${Math.round(med)}, based on ${data.length} records (${sales.length} confirmed sale${sales.length > 1 ? "s" : ""}). This conclusion relies on a small set of transactions and may not reflect stable demand or broader market conditions.`
       : `Very limited data (${data.length} records, ${sales.length} sale${sales.length !== 1 ? "s" : ""}) — any single number (e.g. $${Math.round(med)}) should be treated as suggestive, not a reliable “value.”`;
-
-  return {
+  
+  const interpretation = {
     summary,
     evidence,
     assumptions,
@@ -81,6 +81,8 @@ export function interpret(data) {
     saleCount: sales.length,
     totalCount: data.length,
   };
+
+  return interpretation;
 }
 
 /**
