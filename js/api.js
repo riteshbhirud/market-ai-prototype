@@ -51,16 +51,20 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
         median: interpretation.current_estimate,
         saleCount: data.length,
         totalCount: data.length,
+        current_estimate: interpretation.current_estimate,
+        current_trend: interpretation.current_trend,
+        current_high_range: interpretation.current_high_range,
+        current_low_range: interpretation.current_low_range,
       };
     } catch (e){
       console.error("Failed to load preset interpretation, falling back to live inference:", e);
-      return interpret(data);
+      return await interpret(data, false);
     }
   } else {
   try {
-    return await fetchInterpretation(data);
+    return await fetchInterpretation(data, false);
   } catch {
-    return interpret(data);
+    return await interpret(data, false);
   }
   }
 }

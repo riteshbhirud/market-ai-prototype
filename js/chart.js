@@ -8,12 +8,13 @@ function symbolType(type) {
   return d3.symbolCircle;
 }
 
-export function drawChart(data) {
+export function drawChart(data, ai_metrics, options) {
+  const { showAI = true } = options;
   const width = 800;
   const height = 420;
 
-  const svg = d3
-    .select("#chart")
+  const svg =
+    d3.select("#chart")
     .html("")
     .append("svg")
     .attr("width", width)
@@ -52,7 +53,12 @@ export function drawChart(data) {
 
   drawUncertainty(svg, data, y, width, height);
 
-  drawMedianLine(svg, data, x, y, width);
+
+  if (showAI) {
+    drawAIBounds(svg, data, x, y, width, ai_metrics);
+  } else {
+    drawMedianLine(svg, data, x, y, width);
+  }
 
   svg
     .selectAll("path.point")
@@ -135,4 +141,93 @@ function drawMedianLine(svg, data, x, y, width) {
     .attr("class", "chart-uncertainty-label")
     .attr("text-anchor", "start")
     .text(`Median $${Math.round(median)}`);
+}
+
+function drawAIBounds(svg, data, x, y, width, ai_metrics) {
+  const high_range ="current_high_range" in ai_metrics ? y(ai_metrics.current_high_range) : undefined;
+  const low_range ="current_low_range" in ai_metrics ? y(ai_metrics.current_low_range) : undefined;
+  const estimate ="current_estimate" in ai_metrics ? y(ai_metrics.current_estimate) : undefined;
+  const trend ="current_trend" in ai_metrics ? y(ai_metrics.current_trend) : undefined;
+
+  if (estimate !== undefined) {
+    svg
+      .append("line")
+      .attr("class", "chart-estimate-line")
+      .attr("x1", 70)
+      .attr("x2", width - 40)
+      .attr("y1", estimate)
+      .attr("y2", estimate)
+      .attr("stroke", "#218785")
+      .attr("stroke-width", 1.5);
+
+    svg
+      .append("text")
+      .attr("x", width - 38)
+      .attr("y", estimate - 4)
+      .attr("class", "chart-uncertainty-label")
+      .attr("text-anchor", "start")
+      .text(`${Math.round(ai_metrics.current_estimate)}`);
+  }
+
+  if (high_range !== undefined) {
+    svg
+      .append("line")
+      .attr("class", "chart-range-line")
+      .attr("x1", 70)
+      .attr("x2", width - 40)
+      .attr("y1", high_range)
+      .attr("y2", high_range)
+      .attr("stroke", "#218785")
+      .attr("stroke-width", 1.5);
+      
+    svg
+      .append("text")
+      .attr("x", width - 38)
+      .attr("y", high_range - 4)
+      .attr("class", "chart-uncertainty-label")
+      .attr("text-anchor", "start")
+      .text(`${Math.round(ai_metrics.current_high_range)}`);
+  }
+
+  if (low_range !== undefined) {
+   svg
+    .append("line")
+    .attr("class", "chart-range-line")
+    .attr("x1", 70)
+    .attr("x2", width - 40)
+    .attr("y1", low_range)
+    .attr("y2", low_range)
+    .attr("stroke", "#218785")
+    .attr("stroke-width", 1.5);
+
+    svg
+      .append("text")
+      .attr("x", width - 38)
+      .attr("y", low_range - 4)
+      .attr("class", "chart-uncertainty-label")
+      .attr("text-anchor", "start")
+      .text(`${Math.round(ai_metrics.current_low_range)}`);
+  }
+
+  if (low_range !== undefined && high_range !== undefined) {
+   svg
+    .append("rect")
+    .attr("class", "chart-range-rect")
+    .attr("x", 70)
+    .attr("y", high_range)
+    .attr("width", width - 110)
+    .attr("height", low_range - high_range)
+    .attr("stroke", "#21878533")
+    .attr("fill", "#21878533");
+  // const thickness = 20
+  //  svg
+  //   .append("rect")
+  //   .attr("class", "chart-range-rect")
+  //   .attr("x", width - 40 - thickness)
+  //   .attr("y", high_range)
+  //   .attr("width", thickness)
+  //   .attr("height", low_range - high_range)
+  //   .attr("stroke", "#21878555")
+  //   .attr("fill", "#21878555");
+  }
 }

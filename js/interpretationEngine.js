@@ -11,7 +11,10 @@ function median(sorted) {
   return (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
 }
 
-export function interpret(data) {
+export async function interpret(data, useAI) {
+  if (useAI) {
+    return interpret_AI()
+  }
   const sales = data.filter((d) => d.listing_type === "sale");
   const unsold = data.filter((d) => d.listing_type === "unsold");
   const auctions = data.filter((d) => d.listing_type === "auction");
@@ -88,7 +91,7 @@ export function interpret(data) {
 /**
  * Returns one alternative explanation; cycle index for "request another".
  */
-export function getAlternativeInterpretation(data, index = 0) {
-  const { alternatives } = interpret(data);
+export async function getAlternativeInterpretation(data, index = 0) {
+  const { alternatives } = await interpret(data, useAI=false);
   return alternatives[index % alternatives.length];
 }

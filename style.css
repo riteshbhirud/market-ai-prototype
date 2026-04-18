@@ -151,6 +151,11 @@ body {
   stroke-width: 1.5;
 }
 
+.chart-range-line {
+  stroke-dasharray: 5 4;
+  stroke-width: 1.5;
+}
+
 .chart-uncertainty-label {
   font-size: 11px;
   fill: var(--text-muted);
@@ -207,7 +212,7 @@ body {
   margin-bottom: 20px;
 }
 
-#toggle-table {
+.toggle_button {
   padding: 8px 16px;
   font-family: var(--font-sans);
   font-size: 0.875rem;
@@ -220,7 +225,7 @@ body {
   transition: background 0.15s, border-color 0.15s;
 }
 
-#toggle-table:hover {
+.toggle_button:hover {
   background: var(--bg);
   border-color: #d6d3d1;
 }

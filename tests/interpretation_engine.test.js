@@ -17,7 +17,7 @@ function assert(condition, message) {
 }
 
 // --- Shape ---
-const out = interpret(fixture);
+const out = await interpret(fixture, false);
 assert(typeof out.summary === "string" && out.summary.length > 0, "summary is non-empty string");
 assert(Array.isArray(out.evidence), "evidence is array");
 assert(Array.isArray(out.assumptions), "assumptions is array");
@@ -44,8 +44,8 @@ assert(evidenceText.includes("175") || evidenceText.includes("180") || evidenceT
 assert(evidenceText.includes("2") || evidenceText.includes("sale"), "evidence references sales");
 
 // --- Alternatives: getAlternativeInterpretation cycles ---
-const alt0 = getAlternativeInterpretation(fixture, 0);
-const alt1 = getAlternativeInterpretation(fixture, 1);
+const alt0 = await getAlternativeInterpretation(fixture, 0);
+const alt1 = await getAlternativeInterpretation(fixture, 1);
 assert(typeof alt0 === "string" && alt0.length > 0, "getAlternativeInterpretation(0) returns non-empty string");
 assert(typeof alt1 === "string" && alt1.length > 0, "getAlternativeInterpretation(1) returns non-empty string");
 assert(alt0 === out.alternatives[0], "alt0 matches first alternative");
@@ -56,7 +56,7 @@ const sparse = [
   { id: 1, date: "2025-01-01", price: 100, listing_type: "sale", condition: "NM", platform: "eBay", description: "X" },
   { id: 2, date: "2025-01-02", price: 120, listing_type: "unsold", condition: "VG", platform: "eBay", description: "Y" },
 ];
-const sparseOut = interpret(sparse);
+const sparseOut = await interpret(sparse, false);
 assert(sparseOut.saleCount === 1, "sparse data has 1 sale");
 const limitationsText = sparseOut.limitations.join(" ");
 assert(limitationsText.toLowerCase().includes("few") || limitationsText.toLowerCase().includes("small") || limitationsText.toLowerCase().includes("limited"), "sparse data yields a limitation about sample size or few sales");

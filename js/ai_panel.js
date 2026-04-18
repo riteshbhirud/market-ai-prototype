@@ -5,6 +5,16 @@
  * - inspectable: full interpretation with evidence, assumptions, limitations, alternatives.
  * - contestable: cognitive forcing — user records interpretation first, then reveal/hide AI, etc.
  */
+
+const baseInterpretation = {
+  summary: "",
+  evidence: [],
+  assumptions: [],
+  limitations: [], 
+  alternatives: [],
+  reasoning_steps: []
+};
+
 export function loadAI(condition, interpretation) {
   const panel = document.getElementById("interpretation");
   if (!panel || !interpretation) return;
