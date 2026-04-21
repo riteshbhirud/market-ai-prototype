@@ -1,4 +1,5 @@
 const CONDITION_COLORS = {
+  M: "green",
   Mint: "green",
   NM: "blue",
   "VG+": "orange",
@@ -20,7 +21,7 @@ const PLATFORM_PALETTE = [
 ];
 
 function getPlatformColors(platforms) {
-  const known = { eBay: "#e53238", Discogs: "#2d2d2d", Etsy: "#f56400", Amazon: "#ff9900", "Facebook Marketplace": "#4267b2" };
+  const known = { eBay: "#a099d0", Discogs: "#2d2d2d", Etsy: "#f54bd3", Amazon: "#ce6e01", "Facebook Marketplace": "#4267b2" };
   const order = [...new Set(platforms)];
   const scale = {};
   let paletteIndex = 0;
@@ -32,7 +33,7 @@ function getPlatformColors(platforms) {
 
 function getSymbol(type) {
   if (type === "sale") return "●";
-  if (type === "unsold") return "○";
+  if (type === "unsold") return "⊕";
   if (type === "auction") return "▲";
   if (type === "obo") return "◆";
   return "●";
@@ -78,7 +79,7 @@ export function drawLegend(data) {
       .append("span")
       .attr("class", "legend-symbol")
       .style("background", "transparent")
-      .style("border", `2px solid ${platformColors[platform] ?? "#666"}`);
+      .style("border", `4px solid ${platformColors[platform] ?? "#666"}`);
     item.append("span").text(platform);
   });
 }

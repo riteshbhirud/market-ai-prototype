@@ -8,6 +8,11 @@
 
 const baseInterpretation = {
   summary: "",
+  plan: "", 
+  current_estimate  : 720,
+  current_high_range  : 825,
+  current_low_range : 650,
+  current_trend : "decreasing",
   evidence: [],
   assumptions: [],
   limitations: [], 

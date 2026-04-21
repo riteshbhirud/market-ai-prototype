@@ -11,6 +11,10 @@
     "Step 7 – Validate trend: Six consecutive months from Jul–Dec 2025 all priced above $2,309, and the Jan 2026 sale at $2,739.53 is the second-highest price in the entire dataset, just below the Oct 2022 peak of $2,835. The recovery appears sustained, not a single spike."
     ],
 
+    "grade_chart": {
+        "VG+": [2300, 2750]
+    },
+
     "current_estimate": 2475,
     "current_high_range": 2750,
     "current_low_range": 2300,

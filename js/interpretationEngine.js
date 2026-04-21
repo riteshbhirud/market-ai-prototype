@@ -4,12 +4,19 @@
  * from the dataset — interpretation, not recommendation.
  */
 
-function median(sorted) {
-  const n = sorted.length;
-  if (n === 0) return 0;
-  if (n % 2 === 1) return sorted[(n - 1) / 2];
-  return (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
-}
+// summary: summary,
+// evidence: interpretation.evidence,
+// assumptions: interpretation.assumptions,
+// limitations: interpretation.limitations,
+// alternatives: interpretation.alternative_interpretations,
+// plan: "",
+// reasoning_steps: interpretation.reasoning_steps,
+// saleCount: data.length,
+// totalCount: data.length, // might not be accurate
+// current_estimate: interpretation.current_estimate,
+// current_trend: interpretation.current_trend,
+// current_high_range: interpretation.current_high_range,
+// current_low_range: interpretation.current_low_range,
 
 export async function interpret(data, useAI) {
   if (useAI) {
@@ -80,12 +87,22 @@ export async function interpret(data, useAI) {
     alternatives: altTemplates,
     plan: "",
     reasoning_steps: [],
-    median: Math.round(med),
     saleCount: sales.length,
     totalCount: data.length,
+    current_estimate: med,
+    current_trend: "None",
+    current_high_range: maxP,
+    current_low_range: minP,
   };
 
   return interpretation;
+}
+
+function median(sorted) {
+  const n = sorted.length;
+  if (n === 0) return 0;
+  if (n % 2 === 1) return sorted[(n - 1) / 2];
+  return (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
 }
 
 /**

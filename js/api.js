@@ -3,7 +3,7 @@
  * No RAG — prompt + model inference only.
  */
 
-import { interpret} from "./interpretationEngine.js";
+import { interpret } from "./interpretationEngine.js";
 
 const INFERENCE_API = window.INFERENCE_API_URL || "http://localhost:5000";
 
@@ -26,7 +26,6 @@ export async function fetchInterpretation(data) {
     alternatives: Array.isArray(out.alternatives) ? out.alternatives : [],
     plan: out.plan || "",
     reasoning_steps: Array.isArray(out.reasoning_steps) ? out.reasoning_steps : [],
-    median: out.median,
     saleCount: out.saleCount,
     totalCount: out.totalCount,
   };
@@ -35,11 +34,10 @@ export async function fetchInterpretation(data) {
 /** Get interpretation: LLM if API available, else rule-based. Same shape as interpret(). */
 // if test_data use preset
 export async function getInterpretation(data, usePresetInterpretation, presetInterpretationFileName) {
-  if (usePresetInterpretation) {
+  if (usePresetInterpretation) { // use a preset-interpretation
     try {
       const interpretation = await fetch("data/preset_interpretations/" + presetInterpretationFileName).then((r) => r.json());
       const summary = `Recent marketplace signals suggest an expected price around $${interpretation.current_estimate} with a range from $${interpretation.current_low_range} to $${interpretation.current_high_range}, with a ${interpretation.current_trend} price trend. This is based on ${data.length} records (${data.length} confirmed sale${data.length > 1 ? "s" : ""}).`
-
       return {
         summary: summary,
         evidence: interpretation.evidence,
@@ -48,9 +46,9 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
         alternatives: interpretation.alternative_interpretations,
         plan: "",
         reasoning_steps: interpretation.reasoning_steps,
-        median: interpretation.current_estimate,
+        grade_chart: interpretation.grade_chart,
         saleCount: data.length,
-        totalCount: data.length,
+        totalCount: data.length, // might not be accurate
         current_estimate: interpretation.current_estimate,
         current_trend: interpretation.current_trend,
         current_high_range: interpretation.current_high_range,

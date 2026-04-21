@@ -12,6 +12,10 @@
     "Step 8 – Flag critical data quality issue: The 15-month gap between Jun 2024 and Sep 2025 is the single largest analytical risk in this dataset. The card could have traded at vastly different prices during this window with no visibility in the data provided."
     ],
 
+    "grade_chart": {
+        "NM": [17000, 21000]
+    },
+    
     "current_estimate": 19500,
     "current_high_range": 21000,
     "current_low_range": 17000,

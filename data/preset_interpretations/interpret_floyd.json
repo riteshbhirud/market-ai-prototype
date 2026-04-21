@@ -12,9 +12,13 @@
     ],
 
     "grade_chart": {
-        "VG": [650, 825]
+        "G": [50, 65],
+        "VG": [50, 185],
+        "VG+": [70, 160],
+        "NM": [75, 235],
+        "M": [70, 120]
     },
-    
+
     "current_estimate": 720,
     "current_high_range": 825,
     "current_low_range": 650,

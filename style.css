@@ -95,7 +95,7 @@ body {
   border-color: #d6d3d1;
 }
 
-.data-source-buttons button:first-of-type {
+/* .data-source-buttons button:first-of-type {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
@@ -104,7 +104,7 @@ body {
 .data-source-buttons button:first-of-type:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
-}
+} */
 
 .data-source-hint {
   margin: 10px 0 0 0;

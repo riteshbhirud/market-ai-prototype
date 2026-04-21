@@ -4,19 +4,22 @@ import { loadAI } from "./ai_panel.js";
 import { getInterpretation } from "./api.js";
 import { generateMarketData } from "./dataGenerator.js";
 
+const SPARSE_DATA_THREHOLD = 4
 
 ///////PRESET DATA////////
 const preset_test_info = [
-  {"dom-elem-id": "load-demo","test_name": "Demo Record", "marketplace_item_filename":"vinyl_record.json", "interpretation_filename": "none"},
-  {"dom-elem-id": "load-test-7", "test_name": "Jackie Robinson Card (Grade 7)", "marketplace_item_filename":"grade_7.json", "interpretation_filename": "grade_7_interpretation.json"},
-  {"dom-elem-id": "load-test-8", "test_name": "Jackie Robinson Card (Grade 8)", "marketplace_item_filename":"grade_8.json", "interpretation_filename": "grade_8_interpretation.json"},
-  {"dom-elem-id": "load-test-9", "test_name": "Jackie Robinson Card (Grade 9)", "marketplace_item_filename":"grade_9.json", "interpretation_filename": "grade_9_interpretation.json"},
-  {"dom-elem-id": "load-vinyl", "test_name": "Vinyl Record Demo", "marketplace_item_filename":"vinyl_record.json", "interpretation_filename": "vinyl_record_interpretation.json"},
+  // {"dom-elem-id": "load-demo","test_name": "Demo Record", "marketplace_item_filename":"floyd.json", "interpretation_filename": "none"},
+  {"dom-elem-id": "floyd-test","name": "Floyd Record", "marketplace_item_filename":"floyd.json", "interpretation_filename": "interpret_floyd.json"},
+  {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)", "marketplace_item_filename":"grade_7.json", "interpretation_filename": "grade_7_interpretation.json"},
+  {"dom-elem-id": "load-test-8", "name": "Jackie Robinson Card (Grade 8)", "marketplace_item_filename":"grade_8.json", "interpretation_filename": "grade_8_interpretation.json"},
+  {"dom-elem-id": "load-test-9", "name": "Jackie Robinson Card (Grade 9)", "marketplace_item_filename":"grade_9.json", "interpretation_filename": "grade_9_interpretation.json"},
+  {"dom-elem-id": "load-vinyl", "name": "Vinyl Record", "marketplace_item_filename":"vinyl_record.json", "interpretation_filename": "vinyl_record_2.json"},
 ]
 /// PUBLIC STATE DATA ///
 const params = new URLSearchParams(window.location.search);
 const condition = params.get("condition") || "control";
-let currentData = [];
+let currentData = []; // re-renders with data
+let currentName = "Choose an Item to Begin"; // re-renders with data
 let currentInterpretation = ""; 
 let currentAiGraphData = {};
 let showAI = true;
@@ -29,7 +32,7 @@ let rawTableListenerAdded = false;
 ////////////////////////
 
 // renders chart based on public variables
-async function render(data, usePresetInterpretation = false, presetInterpretationFileName = "") {
+async function render(data, item_name, usePresetInterpretation = false, presetInterpretationFileName = "") {
    const requestID = ++currentRequestID;
   
   // assign public variables
@@ -40,6 +43,13 @@ async function render(data, usePresetInterpretation = false, presetInterpretatio
   drawLegend(currentData); // sets up legend depending on the data's present marks
   setupRawTable(currentData); // sets up the table below the graph for raw data
   checkSparsity(currentData); 
+
+  //render title
+  const title = document.getElementById("item-title");
+  currentName = item_name
+  title.innerHTML = `
+      <h3>${currentName}</h3>
+    `;
 
   // if panel exists, set loading message
   const panel = document.getElementById("interpretation");
@@ -54,12 +64,13 @@ async function render(data, usePresetInterpretation = false, presetInterpretatio
   if (requestID !== currentRequestID) return;
   currentInterpretation = loadedInterpretation
   // extract current AI graph data and assign it to public variable
-  currentAiGraphData = {
-    "current_estimate": currentInterpretation?.current_estimate,
-    "current_high_range": currentInterpretation?.current_high_range,
-    "current_low_range": currentInterpretation?.current_low_range,
-    "current_trend": currentInterpretation?.current_trend,
-  }
+  currentAiGraphData = currentInterpretation?.grade_chart
+  // {
+  //   "current_estimate": currentInterpretation?.current_estimate,
+  //   "current_high_range": currentInterpretation?.current_high_range,
+  //   "current_low_range": currentInterpretation?.current_low_range,
+  //   "current_trend": currentInterpretation?.current_trend,
+  // }
   drawChart(currentData, currentAiGraphData, { showAI }); // re-render with AI prediction
   loadAI(condition, currentInterpretation);
 }
@@ -67,7 +78,7 @@ async function render(data, usePresetInterpretation = false, presetInterpretatio
 function checkSparsity(data) {
   const sales = data.filter((d) => d.listing_type === "sale");
   const warningEl = document.getElementById("warning");
-  if (sales.length < 3) {
+  if (sales.length < SPARSE_DATA_THREHOLD) {
     warningEl.innerHTML =
       "⚠ Sparse transaction data — interpretation may be unreliable.";
   } else {
@@ -172,48 +183,34 @@ function setupDataControls() {
     <p>Select an item to begin</p>
     <div class="data-source-buttons">
       ${preset_test_info.reduce(
-        (total_string, test) => total_string + `<button type="button" id="${test["dom-elem-id"]}">${test.test_name}</button>`, "")
+        (total_string, test) => total_string + `<button type="button" id="${test["dom-elem-id"]}">${test.name}</button>`, "")
       }
-      <button type="button" id="gen-random">Generate random data</button>
+      ${
+        "" // <button type="button" id="gen-random">Generate random data</button>
+      }
     </div>
     <p class="data-source-hint">Demo data is fixed. Random data is regenerated each time (same schema).</p>
   `;
 
   preset_test_info.forEach((test) => {
-    document.getElementById(test["dom-elem-id"]).addEventListener("click", async () => {
-      const marketplace_item = await loadTestData("test_data/"+test.marketplace_item_filename);
-      if (test.interpretation_filename == "none") {
-        await render(marketplace_item, false, "");
-      } else {
-        await render(marketplace_item, true, test.interpretation_filename);
+    const test_btn = document.getElementById(test["dom-elem-id"]);
+    if (test_btn) { // only add existing elements
+      test_btn.addEventListener("click", async () => {
+          const marketplace_item = await loadTestData("test_data/"+test.marketplace_item_filename);
+          if (test.interpretation_filename == "none") {
+            await render(marketplace_item, test.name, false, "");
+          } else {
+            await render(marketplace_item, test.name, true, test.interpretation_filename);
+          }
+        });
       }
-    });
-  })
+    })
 
-  // document.getElementById("load-demo").addEventListener("click", async () => {
-  //   const data = await loadTestData("test_data/"+grade_7_original.json");
-  //   await render(data, false, "");
+
+  // document.getElementById("gen-random").addEventListener("click", async () => {
+  //   const data = generateMarketData({ n: 18, seed: Date.now() % 1e6 });
+  //   await render(data, "Random Data", false, "");
   // });
-
-  // document.getElementById("load-test-7").addEventListener("click", async () => {
-  //   const data = await loadTestData("test_data/grade_7_original.json");
-  //   await render(data, true, "grade_7_interpretation.json");
-  // });
-
-  // document.getElementById("load-test-8").addEventListener("click", async () => {
-  //   const data = await loadTestData("test_data/grade_8_original.json");
-  //   await render(data, true, "grade_8_interpretation.json");
-  // });
-
-  // document.getElementById("load-test-9").addEventListener("click", async () => {
-  //   const data = await loadTestData("test_data/grade_9_original.json");
-  //   await render(data, true, "grade_9_interpretation.json");
-  // });
-
-  document.getElementById("gen-random").addEventListener("click", async () => {
-    const data = generateMarketData({ n: 18, seed: Date.now() % 1e6 });
-    await render(data, false, "");
-  });
 }
 
 // render initially with loadDemoData
