@@ -8,12 +8,23 @@ const SPARSE_DATA_THREHOLD = 4
 
 ///////PRESET DATA////////
 const preset_test_info = [
+  {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)",
+    "marketplace_item_filename":"grade_7.json", 
+    "interpretation_filename": "grade_7_interpretation.json"},
+
+  {"dom-elem-id": "load-test-8", "name": "Jackie Robinson Card (Grade 8)", 
+    "marketplace_item_filename":"grade_8.json", 
+    "interpretation_filename": "grade_8_interpretation.json"},
+    
+  {"dom-elem-id": "load-test-9", "name": "Jackie Robinson Card (Grade 9)", 
+    "marketplace_item_filename":"grade_9.json", 
+    "interpretation_filename": "grade_9_interpretation.json"},
+    
+  {"dom-elem-id": "load-vinyl", "name": "Vinyl Record", 
+    "marketplace_item_filename":"vinyl_record.json", 
+    "interpretation_filename": "vinyl_record_2.json"},
   // {"dom-elem-id": "load-demo","test_name": "Demo Record", "marketplace_item_filename":"floyd.json", "interpretation_filename": "none"},
   // {"idx": 0, "dom-elem-id": "floyd-test","name": "Floyd Record", "marketplace_item_filename":"floyd.json", "interpretation_filename": "interpret_floyd.json"},
-  {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)", "marketplace_item_filename":"grade_7.json", "interpretation_filename": "grade_7_interpretation.json"},
-  {"dom-elem-id": "load-test-8", "name": "Jackie Robinson Card (Grade 8)", "marketplace_item_filename":"grade_8.json", "interpretation_filename": "grade_8_interpretation.json"},
-  {"dom-elem-id": "load-test-9", "name": "Jackie Robinson Card (Grade 9)", "marketplace_item_filename":"grade_9.json", "interpretation_filename": "grade_9_interpretation.json"},
-  {"dom-elem-id": "load-vinyl", "name": "Vinyl Record", "marketplace_item_filename":"vinyl_record.json", "interpretation_filename": "vinyl_record_2.json"},
 ]
 /// PUBLIC STATE DATA ///
 const params = new URLSearchParams(window.location.search);
