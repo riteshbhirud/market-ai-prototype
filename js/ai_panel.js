@@ -20,7 +20,7 @@ const baseInterpretation = {
   reasoning_steps: []
 };
 
-export function loadAI(condition, interpretation) {
+export function loadAI(condition, interpretation, unlockAICallback) {
   const panel = document.getElementById("interpretation");
   if (!panel || !interpretation) return;
 
@@ -34,8 +34,8 @@ export function loadAI(condition, interpretation) {
 
   if (condition === "control") {
     panel.innerHTML = `
-      <h3>Interpretation</h3>
-      <p class="interpretation-summary">${interpretation.summary}</p>
+      <h3 class="ai-title">Generated Interpretation</h3>
+      <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
       <p class="interpretation-note">This system supports interpretation, not recommendation. It does not tell you what to buy or what price is "correct."</p>
     `;
     return;
@@ -43,8 +43,8 @@ export function loadAI(condition, interpretation) {
 
   if (condition === "inspectable") {
     panel.innerHTML = `
-      <h3>Interpretation</h3>
-      <p class="interpretation-summary">${interpretation.summary}</p>
+      <h3 class="ai-title">Generated Interpretation</h3>
+      <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
       ${planHtml}
       ${reasoningHtml}
       <section class="interpretation-section">
@@ -82,7 +82,7 @@ export function loadAI(condition, interpretation) {
         </div>
         <div id="contestable-ai-block" class="hidden">
           <hr>
-          <h3>System interpretation</h3>
+          <h3 class="ai-title">Generated interpretation</h3>
           <div class="contestable-ai-toolbar">
             <button type="button" id="toggle-ai">Hide system interpretation</button>
             <button type="button" id="alternative-btn">Request alternative explanation</button>
@@ -91,7 +91,7 @@ export function loadAI(condition, interpretation) {
           <div id="contestable-ai-content">
             ${planHtml}
             ${reasoningHtml}
-            <p class="interpretation-summary">${interpretation.summary}</p>
+            <p class="interpretation-summary interpretation-section ">${interpretation.summary}</p>
             <section class="interpretation-section collapsible">
               <h4 class="collapse-toggle">Assumptions <span class="collapse-icon">▼</span></h4>
               <ul class="collapse-content hidden"><li>${interpretation.assumptions.join("</li><li>")}</li></ul>
@@ -124,9 +124,10 @@ export function loadAI(condition, interpretation) {
           submitBtn.setAttribute("aria-invalid", "true");
           return;
         }
+        unlockAICallback();
         userSubmitted = true;
         submitBtn.setAttribute("aria-invalid", "false");
-        panel.querySelector(".contestable-actions").innerHTML = '<span class="user-done">Recorded. You can reveal the system interpretation below.</span>';
+        panel.querySelector(".contestable-actions").innerHTML = '<span class="user-done">Recorded. You can reveal the system interpretation below. You can reveal the AI estimate on the graph above.</span>';
         aiBlock.classList.remove("hidden");
         aiVisible = true;
         toggleBtn.textContent = "Hide system interpretation";
@@ -178,3 +179,5 @@ export function loadAI(condition, interpretation) {
     renderContestable();
   }
 }
+
+// ext: color all conds from summary 

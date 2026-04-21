@@ -1,5 +1,7 @@
 import { CONDITION_COLORS, getPlatformColors } from "./legend.js";
 
+let aiVisible = true; // persists across renders
+
 function symbolType(type) {
   if (type === "sale") return d3.symbolCircle;
   if (type === "unsold") return d3.symbolCircle;
@@ -8,14 +10,63 @@ function symbolType(type) {
   return d3.symbolCircle;
 }
 
-export function drawChart(data, ai_metrics, options) {
-  const { showAI = true } = options;
+export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) {
+  const { showAI = false } = options;
+  const aiUnlocked = showAI;
+
   const width = 800;
   const height = 420;
 
-  const svg =
-    d3.select("#chart")
-    .html("")
+  const chart = d3.select("#chart").html("");
+
+  // ---------------- TITLE ----------------
+  chart.append("h2").text("Item "+(currentTestIdx+1)+": " +item_name);
+
+  // ---------------- BUTTON ----------------
+  let btn = chart.select("#toggle-ai-graph");
+
+  if (btn.empty()) {
+    btn = chart
+      .append("button")
+      .attr("id", "toggle-ai-graph")
+      .attr("class", "toggle_button toggle_ai_button");
+  }
+
+  btn
+    .classed("disabled", !aiUnlocked)
+    .property("disabled", !aiUnlocked)
+    .text(
+      !aiUnlocked
+        ? "AI Price Estimate Locked"
+        : aiVisible
+        ? "Hide AI Price Estimate"
+        : "Show AI Price Estimate"
+    );
+
+    const snapshot = {
+      data,
+      item_name,
+      currentTestIdx,
+      ai_metrics,
+      showAI
+    };
+
+    btn.on("click", null).on("click", () => {
+      if (!aiUnlocked) return;
+      aiVisible = !aiVisible;
+      drawChart(
+        snapshot.data,
+        snapshot.item_name,
+        snapshot.currentTestIdx,
+        snapshot.ai_metrics,
+        {
+          showAI: true
+        }
+      );
+    });
+
+  // ---------------- SVG ----------------
+  const svg = chart
     .append("svg")
     .attr("width", width)
     .attr("height", height);
@@ -51,17 +102,27 @@ export function drawChart(data, ai_metrics, options) {
   const platforms = [...new Set(data.map((d) => d.platform))];
   const platformColors = getPlatformColors(platforms);
 
-  drawUncertainty(svg, data, y, width, height);
-
-  if (showAI) {
-    console.log("OBJECT " + JSON.stringify(Object.entries(ai_metrics)))
-    Object.entries(ai_metrics).forEach((entry) => {
-      drawAIBounds(svg, data, x, y, width, entry[1], entry[0]);
+  // ---------------- DRAW AI OR MEDIAN ----------------
+  if (aiUnlocked && aiVisible) {
+    Object.entries(ai_metrics).forEach(([cond, range]) => {
+      console.log("entry:"+ JSON.stringify([range, cond]))
+      console.log("range:"+ JSON.stringify(range))
+      console.log("cond:"+ JSON.stringify(cond))
+      drawAIBounds(svg, x, y, width, cond, range);
     });
   } else {
     drawMedianLine(svg, data, x, y, width);
   }
 
+  //   if (aiVisible) {
+  //   Object.entries(ai_metrics).forEach((entry) => {
+  //     drawAIBounds(svg, data, x, y, width, entry[1], entry[0]);
+  //   });
+  // } else {
+  //   drawMedianLine(svg, data, x, y, width);
+  // }
+
+  // ---------------- DATA POINTS ----------------
   svg
     .selectAll("path.point")
     .data(data)
@@ -78,14 +139,12 @@ export function drawChart(data, ai_metrics, options) {
     .attr("fill", (d) => colorScale(d.condition))
     .attr("stroke", (d) => platformColors[d.platform] ?? "#333")
     .attr("stroke-width", 2)
-    .on("mouseover", (event, d) => {  
-      // fade all regions
+    .on("mouseover", (event, d) => {
       d3.selectAll(".chart-range-rect")
         .transition()
         .duration(150)
         .attr("fill-opacity", 0.02);
 
-      // highlight matching condition
       d3.selectAll(`.chart-range-rect[data-cond='${d.condition}']`)
         .transition()
         .duration(150)
@@ -97,7 +156,11 @@ export function drawChart(data, ai_metrics, options) {
       tooltip
         .style("opacity", 1)
         .html(
-          `<b>$${d.price}</b><br>Type: ${d.listing_type}<br>Condition: ${d.condition}<br>Platform: ${d.platform}<br>${d.description}`
+          `<b>$${d.price}</b><br>
+           Type: ${d.listing_type}<br>
+           Condition: ${d.condition}<br>
+           Platform: ${d.platform}<br>
+           ${d.description}`
         );
     })
     .on("mousemove", (event) => {
@@ -109,15 +172,14 @@ export function drawChart(data, ai_metrics, options) {
       d3.selectAll(".chart-range-rect")
         .transition()
         .duration(150)
-        .attr("fill-opacity", 0.05); // reset
-        
-  d3.selectAll(".chart-range-line")
-    .attr("stroke-opacity", 0.3);
+        .attr("fill-opacity", 0.05);
 
-    tooltip.style("opacity", 0);
-  });
+      d3.selectAll(".chart-range-line").attr("stroke-opacity", 0.3);
 
-  // overlay X for unsold
+      tooltip.style("opacity", 0);
+    });
+
+  // ---------------- UNSOLD MARK ----------------
   svg.selectAll("path.unsold-x")
     .data(data.filter(d => d.listing_type === "unsold"))
     .enter()
@@ -127,15 +189,14 @@ export function drawChart(data, ai_metrics, options) {
       "transform",
       (d) => `translate(${x(new Date(d.date))},${y(d.price)})`
     )
-    .attr("d", d3.symbol().type(d3.symbolPlus).size(80))
+    .attr("d", d3.symbol().type(d3.symbolPlus).size(75))
     .attr("stroke", (d) => platformColors[d.platform])
     .attr("stroke-width", 1.5)
-    // .attr("fill", "none")
     .attr("pointer-events", "none");
 
-  svg.selectAll(".chart-uncertainty-label-bg").raise(); // hack to raise layer of labels
-  svg.selectAll(".chart-uncertainty-label").raise(); // hack to raise layer of labels
-
+  // ---------------- LAYER FIX ----------------
+  svg.selectAll(".chart-uncertainty-label-bg").raise();
+  svg.selectAll(".chart-uncertainty-label").raise();
 }
 
 function drawUncertainty(svg, data, y, width, height) {
@@ -200,9 +261,13 @@ function drawMedianLine(svg, data, x, y, width) {
     .attr("opacity", 0.6);
 }
 
-function drawAIBounds(svg, data, x, y, width, ai_metrics, cond) {
-  const unconverted_high_range = ai_metrics[1]
-  const unconverted_low_range = ai_metrics[0]
+function drawAIBounds(svg, x, y, width, cond, range) {
+
+  console.log("range" + range)
+  console.log("cond" + cond)
+
+  const unconverted_high_range = range[1]
+  const unconverted_low_range = range[0]
   // const unconverted_estimate = (unconverted_high_range - unconverted_low_range)/2
 
   const high_range = y(unconverted_high_range)
@@ -214,10 +279,10 @@ function drawAIBounds(svg, data, x, y, width, ai_metrics, cond) {
   const bound_opacity = .3
   // const fill_opacity = .05
 
-  // const high_range ="current_high_range" in ai_metrics ? y(ai_metrics.current_high_range) : undefined;
-  // const low_range ="current_low_range" in ai_metrics ? y(ai_metrics.current_low_range) : undefined;
-  // const estimate ="current_estimate" in ai_metrics ? y(ai_metrics.current_estimate) : undefined;
-  // const trend ="current_trend" in ai_metrics ? y(ai_metrics.current_trend) : undefined;
+  // const high_range ="current_high_range" in range ? y(range.current_high_range) : undefined;
+  // const low_range ="current_low_range" in range ? y(range.current_low_range) : undefined;
+  // const estimate ="current_estimate" in range ? y(range.current_estimate) : undefined;
+  // const trend ="current_trend" in range ? y(range.current_trend) : undefined;
 
   if (estimate !== undefined) {
     // svg

@@ -37,7 +37,13 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
   if (usePresetInterpretation) { // use a preset-interpretation
     try {
       const interpretation = await fetch("data/preset_interpretations/" + presetInterpretationFileName).then((r) => r.json());
-      const summary = `Recent marketplace signals suggest an expected price around $${interpretation.current_estimate} with a range from $${interpretation.current_low_range} to $${interpretation.current_high_range}, with a ${interpretation.current_trend} price trend. This is based on ${data.length} records (${data.length} confirmed sale${data.length > 1 ? "s" : ""}).`
+      const gradeRanges = interpretation.grade_chart || {};
+
+      const formattedRanges = Object.entries(gradeRanges)
+        .map(([grade, [low, high]]) => `${grade}: $${low}–$${high}`)
+        .join("\n");
+
+      const summary = `The AI Model estimates reasonable current prices at: ${formattedRanges}. This is based on ${data.length} records (${data.length} confirmed sale${data.length > 1 ? "s" : ""}).`;      
       return {
         summary: summary,
         evidence: interpretation.evidence,
