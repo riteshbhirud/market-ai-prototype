@@ -6,6 +6,7 @@ import { generateMarketData } from "./dataGenerator.js";
 
 const SPARSE_DATA_THREHOLD = 4
 
+/// ADD NEW TESTS HERE WITH THEIR CORRESPONDING DATA AND PRE-MADE SUMMARY
 ///////PRESET DATA////////
 const preset_test_info = [
   {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)",
@@ -15,7 +16,7 @@ const preset_test_info = [
   {"dom-elem-id": "load-test-8", "name": "Jackie Robinson Card (Grade 8)", 
     "marketplace_item_filename":"grade_8.json", 
     "interpretation_filename": "grade_8_interpretation.json"},
-    
+
   {"dom-elem-id": "load-test-9", "name": "Jackie Robinson Card (Grade 9)", 
     "marketplace_item_filename":"grade_9.json", 
     "interpretation_filename": "grade_9_interpretation.json"},

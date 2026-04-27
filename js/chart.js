@@ -12,10 +12,18 @@ function symbolType(type) {
 
 export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) {
   const { showAI = false } = options;
+
+  const containerEl = document.getElementById("chart");   // 👈 define it
+  const containerWidth = containerEl.clientWidth || 800;  // fallback
+
+  const MIN_WIDTH = 700;
+  const width = Math.max(containerWidth, MIN_WIDTH);
+  const height = window.innerWidth < 900 ? 480 : 420;
+
   const aiUnlocked = showAI;
 
-  const width = 800;
-  const height = 420;
+  // const width = container.clientWidth;   // 👈 dynamic
+  // const height = 420;
 
   const chart = d3.select("#chart").html("");
 
@@ -69,7 +77,10 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
   const svg = chart
     .append("svg")
     .attr("width", width)
-    .attr("height", height);
+    .attr("height", height)
+    .attr("viewBox", `0 0 ${width} ${height}`)  // 👈 important
+    .style("max-width", "100%")                 // 👈 responsive
+    .style("height", "auto");
 
   const x = d3
     .scaleTime()
