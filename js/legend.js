@@ -21,7 +21,7 @@ const PLATFORM_PALETTE = [
 ];
 
 function getPlatformColors(platforms) {
-  const known = { eBay: "#a099d0", Discogs: "#2d2d2d", Etsy: "#f54bd3", Amazon: "#da5e00", "Facebook Marketplace": "#4267b2" };
+  const known = { eBay: "#a099d0", Discogs: "#af6af4", Etsy: "#f54bd3", Amazon: "#da5e00", "Facebook Marketplace": "#4267b2" };
   const order = [...new Set(platforms)];
   const scale = {};
   let paletteIndex = 0;

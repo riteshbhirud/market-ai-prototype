@@ -115,15 +115,19 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
 
   // ---------------- DRAW AI OR MEDIAN ----------------
   if (aiUnlocked && aiVisible) {
+    const latestDate = d3.max(data, d => new Date(d.date));
+    const oneMonthBefore = new Date(latestDate);
+    oneMonthBefore.setMonth(oneMonthBefore.getMonth() - 3);
+
     Object.entries(ai_metrics).forEach(([cond, range]) => {
       console.log("entry:"+ JSON.stringify([range, cond]))
       console.log("range:"+ JSON.stringify(range))
       console.log("cond:"+ JSON.stringify(cond))
-      drawAIBounds(svg, x, y, width, cond, range);
+      drawAIBounds(svg, x, y, width, cond, range,oneMonthBefore,latestDate);
     });
-  } else {
-    drawMedianLine(svg, data, x, y, width);
-  }
+  } 
+  drawMedianLine(svg, data, x, y, width);
+  
 
   //   if (aiVisible) {
   //   Object.entries(ai_metrics).forEach((entry) => {
@@ -272,7 +276,9 @@ function drawMedianLine(svg, data, x, y, width) {
     .attr("opacity", 0.6);
 }
 
-function drawAIBounds(svg, x, y, width, cond, range) {
+function drawAIBounds(svg, x, y, width, cond, range, earlyDate, laterDate) {
+  const xStart = x(earlyDate);  // 👈 LEFT side (1 month before)
+  const xEnd = x(laterDate);      // 👈 RIGHT side (latest point)
 
   console.log("range" + range)
   console.log("cond" + cond)
@@ -333,8 +339,8 @@ function drawAIBounds(svg, x, y, width, cond, range) {
     svg
       .append("line")
       .attr("class", "chart-range-line")
-      .attr("x1", 70)
-      .attr("x2", width - 40)
+      .attr("x1", xStart)
+      .attr("x2", xEnd)
       .attr("y1", high_range)
       .attr("y2", high_range)
       .attr("stroke", cond_color)
@@ -367,8 +373,8 @@ function drawAIBounds(svg, x, y, width, cond, range) {
    svg
     .append("line")
     .attr("class", "chart-range-line")
-    .attr("x1", 70)
-    .attr("x2", width - 40)
+    .attr("x1", xStart)
+    .attr("x2", xEnd)
     .attr("y1", low_range)
     .attr("y2", low_range)
     .attr("stroke", cond_color)
@@ -402,9 +408,9 @@ function drawAIBounds(svg, x, y, width, cond, range) {
   .append("rect")
   .attr("class", "chart-range-rect")
   .attr("data-cond", cond)   // 👈 IMPORTANT
-  .attr("x", 70)
+  .attr("x", xStart)
   .attr("y", high_range)
-  .attr("width", width - 110)
+  .attr("width", xEnd-xStart)
   .attr("height", low_range - high_range)
   .style("fill", cond_color)
   .attr("fill-opacity", 0.05); 

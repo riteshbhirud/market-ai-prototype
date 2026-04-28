@@ -9,21 +9,36 @@ const SPARSE_DATA_THREHOLD = 4
 /// ADD NEW TESTS HERE WITH THEIR CORRESPONDING DATA AND PRE-MADE SUMMARY
 ///////PRESET DATA////////
 const preset_test_info = [
-  {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)",
-    "marketplace_item_filename":"grade_7.json", 
-    "interpretation_filename": "grade_7_interpretation.json"},
+    {"dom-elem-id": "load-task-1", "name": "Vinyl Record 1",
+    "marketplace_item_filename":"task1.json", 
+    "interpretation_filename": "task1.json"},
 
-  {"dom-elem-id": "load-test-8", "name": "Jackie Robinson Card (Grade 8)", 
-    "marketplace_item_filename":"grade_8.json", 
-    "interpretation_filename": "grade_8_interpretation.json"},
+    {"dom-elem-id": "load-task-2", "name": "Vinyl Record 2",
+    "marketplace_item_filename":"task2.json", 
+    "interpretation_filename": "task2.json"},
 
-  {"dom-elem-id": "load-test-9", "name": "Jackie Robinson Card (Grade 9)", 
-    "marketplace_item_filename":"grade_9.json", 
-    "interpretation_filename": "grade_9_interpretation.json"},
+    {"dom-elem-id": "load-task-3", "name": "Vinyl Record 3",
+    "marketplace_item_filename":"task3.json", 
+    "interpretation_filename": "task3.json"},
     
-  {"dom-elem-id": "load-vinyl", "name": "Vinyl Record", 
-    "marketplace_item_filename":"vinyl_record.json", 
-    "interpretation_filename": "vinyl_record_2.json"},
+    {"dom-elem-id": "load-task-4", "name": "Vinyl Record 4",
+    "marketplace_item_filename":"task4.json", 
+    "interpretation_filename": "task4.json"},
+  // {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)",
+  //   "marketplace_item_filename":"empty.json", 
+  //   "interpretation_filename": "grade_7_interpretation.json"},
+
+  // {"dom-elem-id": "load-test-8", "name": "Jackie Robinson Card (Grade 8)", 
+  //   "marketplace_item_filename":"grade_8.json", 
+  //   "interpretation_filename": "grade_8_interpretation.json"},
+
+  // {"dom-elem-id": "load-test-9", "name": "Jackie Robinson Card (Grade 9)", 
+  //   "marketplace_item_filename":"grade_9.json", 
+  //   "interpretation_filename": "grade_9_interpretation.json"},
+    
+  // {"dom-elem-id": "load-vinyl", "name": "Vinyl Record", 
+  //   "marketplace_item_filename":"vinyl_record.json", 
+  //   "interpretation_filename": "vinyl_record_2.json"},
   // {"dom-elem-id": "load-demo","test_name": "Demo Record", "marketplace_item_filename":"floyd.json", "interpretation_filename": "none"},
   // {"idx": 0, "dom-elem-id": "floyd-test","name": "Floyd Record", "marketplace_item_filename":"floyd.json", "interpretation_filename": "interpret_floyd.json"},
 ]
