@@ -1,10 +1,10 @@
 const CONDITION_COLORS = {
-  M: "green",
-  Mint: "green",
-  NM: "blue",
-  "VG+": "orange",
-  VG: "red",
-  G: "gray",
+  M: "#7700ff",
+  Mint: "#0008ff",
+  NM: "#009838",
+  "VG+": "#a75900",
+  VG: "#e30000",
+  G: "#e44eff",
 };
 
 // Known platforms get fixed colors; others get colors from this palette
@@ -21,7 +21,7 @@ const PLATFORM_PALETTE = [
 ];
 
 function getPlatformColors(platforms) {
-  const known = { eBay: "#a099d0", Discogs: "#af6af4", Etsy: "#f54bd3", Amazon: "#da5e00", "Facebook Marketplace": "#4267b2" };
+  const known = { eBay: "rgb(220, 242, 159)", Discogs: "#e1a5ff", Etsy: "#ffa2cc", Amazon: "#ffbb00", "Facebook Marketplace": "#9cbcfd" };
   const order = [...new Set(platforms)];
   const scale = {};
   let paletteIndex = 0;

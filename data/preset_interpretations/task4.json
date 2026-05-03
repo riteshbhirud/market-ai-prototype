@@ -1,46 +1,42 @@
 {
-    "plan": "Analyze 59 monthly eBay sales of this Grade 7 baseball card from April 2021 through March 2026. Calculate a current estimate using the most recent 3–6 months of sales, determine a price range, identify the trend direction by comparing recent averages to prior-year averages, and surface key evidence, assumptions, limitations, and alternative interpretations.",
+  "plan": "Identify the most recent three months of data (approximately February–April 2026), separate confirmed sales from unsold/asking listings, weight actual transactions most heavily, and apply the pre-set NM grade chart range of $34–$131. Frame evidence, assumptions, limitations, and alternative interpretations around that preset range given the dataset's wide internal spread.",
+  "reasoning_steps": [
+    "Step 1: Identify the most recent date in the dataset — 2026-04-15 — and define 'recent three months' as approximately February–April 2026.",
+    "Step 2: Filter for records within that window: IDs 18–25 (Feb 2 – Apr 15, 2026).",
+    "Step 3: Separate confirmed sales from unsold listings in the recent window. Only ID 21 (2026-03-15, eBay, $125.76, '5th pressing with inserts') is a confirmed sale. All others (IDs 18–20, 22–25) are unsold asking prices.",
+    "Step 4: The single confirmed recent sale at $125.76 falls within the pre-set NM ceiling of $131, anchoring the upper-mid range as achievable for desirable NM copies with inserts.",
+    "Step 5: Recent unsold asking prices range widely from $66.08 (Amazon, worn Spanish pressing) to $184.59 (Etsy, early UK pressing) — the majority of these have not cleared, suggesting the market does not support prices above ~$131 for most copies.",
+    "Step 6: Review broader historical confirmed sales (IDs 1–14) from May–November 2025. Confirmed sales ranged from $31.48 to $127.01, with the bulk falling between $46–$116. This strongly supports the pre-set floor of $34 and ceiling of $131.",
+    "Step 7: Note that Etsy unsold listings skew heavily high ($102–$184), likely reflecting speculative seller pricing rather than true market value. Amazon unsold listings skew low ($66–$72), possibly reflecting budget or incomplete copies.",
+    "Step 8: Apply the pre-set grade chart — NM: $34–$131. Only NM condition is present in the data; no other grades are reported."
+  ],
+  "grade_chart": {
+    "NM": [34, 131]
+  },
 
-    "reasoning_steps": [
-    "Step 1 – Full dataset overview: 59 sales spanning Apr 2021–Mar 2026, all Grade 7, all eBay. Prices range from $581.42 (Oct 2025) to $987.19 (Jul 2023).",
-    "Step 2 – Segment into annual averages: 2021 avg ≈ $831 (9 sales); 2022 avg ≈ $857 (12 sales); 2023 avg ≈ $881 (12 sales, peak year); 2024 avg ≈ $793 (12 sales); 2025 avg ≈ $729 (12 sales); 2026 partial avg ≈ $766 (3 sales).",
-    "Step 3 – Identify peak and decline: Card peaked in mid-2023 (~$975–$987), then entered a multi-year downtrend. 2024 average fell ~10% from 2023. 2025 average fell another ~8% from 2024.",
-    "Step 4 – Current estimate: Use the 6 most recent sales (Oct 2025–Mar 2026): $581.42, $715.89, $721.99, $824.99, $744.50, $730.00. Average = ($581.42+$715.89+$721.99+$824.99+$744.50+$730.00)/6 ≈ $719.80. Round to $720.",
-    "Step 5 – Range: Low anchor = recent floor of ~$581 (Oct 2025 outlier); practical low using the 3 weakest recent sales ≈ $650. High anchor = recent ceiling ~$825 (Jan 2026 spike). Set range: $650–$825.",
-    "Step 6 – Trend: 2023 avg $881 → 2024 avg $793 → 2025 avg $729 → early 2026 avg $766. Year-over-year direction is clearly downward. Early 2026 shows a slight uptick from the 2025 trough but remains well below 2023–2024 levels. Trend = 'decreasing'.",
-    "Step 7 – Validate trend: The 12-month rolling average has declined every year since 2023. The Oct 2025 low of $581 and the Jun 2025 spike to $914 suggest volatility, but the central tendency remains on a downward slope."
-    ],
+    "current_estimate": -1,
+    "current_high_range": -1,
+    "current_low_range": -1,
+    "current_trend": "steady",
 
-    "grade_chart": {
-        "VG": [650, 825]
-    },
-    
-    "current_estimate": 720,
-    "current_high_range": 825,
-    "current_low_range": 650,
-    "current_trend": "decreasing",
-
-    "evidence": [
-    "The 6 most recent sales (Oct 2025–Mar 2026) average $719.80, anchoring the current estimate near $720.",
-    "Annual average prices show a clear multi-year decline: ~$881 in 2023, ~$793 in 2024, ~$729 in 2025, confirming the downtrend.",
-    "The card's all-time high of ~$987 (Jul 2023) is now roughly 27% above current trading levels, reinforcing that the peak has passed."
-    ],
-
-    "assumptions": [
-    "Each listing represents a single, verified completed sale of the identical card at the stated grade — not a relisted, unsold, or buy-it-now asking price.",
-    "One sale per month is sufficient to represent that month's market; thin data months are treated as equally valid as busier periods.",
-    "eBay sold prices are assumed to reflect fair market value; no adjustments are made for seller fees, shipping, or buyer premiums."
-    ],
-
-    "limitations": [
-    "Only one sale per month is recorded — a single outlier sale (e.g., Jun 2025 at $913.94) can distort monthly and annual averages significantly.",
-    "All data comes from a single platform (eBay); prices on other platforms or at auction houses may differ materially.",
-    "The dataset does not distinguish between auction and fixed-price sales, which can produce meaningfully different realized prices for the same card."
-    ],
-
-    "alternative_interpretations": [
-    "The Jun 2025 spike to $913.94 amid otherwise declining prices could signal periodic demand surges (e.g., player anniversary, news event) — if such catalysts recur, the trend may be 'volatile' rather than purely 'decreasing'.",
-    "The early 2026 recovery from the Oct 2025 trough ($581 → $825 → $730) could indicate the card is finding a new price floor and stabilizing, making 'steady' a reasonable alternative trend label going forward.",
-    "The long-term price level ($700–$800) is still well above the 2021 starting point ($721), so from a multi-year perspective the card could be interpreted as having retained most of its value after a speculative 2022–2023 run-up."
-    ]
+  "evidence": [
+    "Thirteen confirmed NM sales from May–November 2025 ranged from $31.48 to $127.01, with the vast majority falling between $46 and $127 — directly validating the pre-set $34–$131 range as historically accurate.",
+    "The only confirmed sale in the recent three-month window (March 2026, eBay, 5th pressing with inserts) transacted at $125.76, near the top of the pre-set range and confirming the $131 ceiling remains achievable for well-described NM copies.",
+    "Multiple recent unsold listings priced above $131 (Etsy asking prices of $148–$184) have failed to clear, reinforcing that $131 functions as a practical market ceiling for NM copies outside of rare premium editions."
+  ],
+  "assumptions": [
+    "Unsold listings priced above $131 are assumed to reflect speculative or aspirational seller pricing rather than true market value, as none have resulted in confirmed transactions.",
+    "The wide internal spread within NM ($34–$131) is assumed to reflect genuine copy-level variation — inserts, pressing origin, edition type, and sleeve condition — rather than grade inconsistency.",
+    "The single confirmed recent sale ($125.76) is assumed to be representative of the upper end of current NM demand for desirable copies, not an outlier, given its consistency with the November 2025 eBay sale ($127.01)."
+  ],
+  "limitations": [
+    "Only one confirmed sale exists in the most recent three-month window (Feb–Apr 2026), making current price estimates heavily dependent on historical 2025 sales data for validation.",
+    "The NM range of $34–$131 is exceptionally wide — nearly 4x from floor to ceiling — providing limited practical guidance for a collector trying to price or buy a specific copy without knowing its exact pressing details.",
+    "Several 'NM' listings include descriptions inconsistent with the grade (e.g., 'worn Spanish pressing', 'heavily used playable', 'gatefold worn sleeve'), suggesting grade inflation in parts of this dataset that could distort the low end of the range."
+  ],
+  "alternative_interpretations": [
+    "The cluster of Etsy unsold listings priced $102–$184 may eventually clear as the market rises, suggesting the $131 ceiling could move upward in coming months — particularly for early UK pressings or sealed copies.",
+    "The low floor of $34 may be an artifact of early 2025 Amazon retail pricing rather than true secondary market value; the realistic collector floor for clean NM copies on peer-to-peer platforms may be closer to $60–$70 based on recent activity.",
+    "The divergence between Etsy asking prices ($66–$184) and eBay confirmed sales ($116–$127) may indicate platform-specific demand differences rather than a unified NM market — Etsy buyers and eBay buyers may represent distinct collector segments with different price tolerances."
+  ]
 }

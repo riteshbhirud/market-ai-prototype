@@ -113,6 +113,14 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
   const platforms = [...new Set(data.map((d) => d.platform))];
   const platformColors = getPlatformColors(platforms);
 
+  svg
+  .append("rect")
+  .attr("x", 70)                         // align with y-axis
+  .attr("y", 40)                         // align with top padding
+  .attr("width", width - 110)            // (70 left + 40 right margin)
+  .attr("height", height - 100)          // (40 top + 60 bottom margin)
+  .attr("fill", "#f5f5f5");              // light grey
+
   // ---------------- DRAW AI OR MEDIAN ----------------
   if (aiUnlocked && aiVisible) {
     const latestDate = d3.max(data, d => new Date(d.date));
@@ -128,7 +136,41 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
   } 
   drawMedianLine(svg, data, x, y, width);
   
+  drawCursorLine(svg, data, x, y, width);
 
+  const cursorLine = svg.selectAll(".cursor-line");
+  const cursorLineLabel = svg.selectAll(".cursor-line-label");
+  svg
+    .on("mouseover", (event) => {
+      const [x, yVal] = d3.pointer(event);
+
+      cursorLine
+        .style("opacity", 1)
+        .attr("y1", yVal)
+        .attr("y2", yVal);
+
+      cursorLineLabel
+        .style("opacity", 1)
+        .attr("x", x-30)
+        .text(`$${Math.round(y.invert(yVal))}`)
+        .attr("y", yVal - 5);
+    })
+    .on("mousemove", (event) => {
+      const [x, yVal] = d3.pointer(event);
+
+      cursorLine
+        .attr("y1", yVal)
+        .attr("y2", yVal);
+
+      cursorLineLabel
+        .attr("x", x-30)
+        .text(`$${Math.round(y.invert(yVal))}`)
+        .attr("y", yVal-5);
+    })
+    .on("mouseout", () => {
+      cursorLine.style("opacity", 0);
+      cursorLineLabel.style("opacity", 0);
+    });
   //   if (aiVisible) {
   //   Object.entries(ai_metrics).forEach((entry) => {
   //     drawAIBounds(svg, data, x, y, width, entry[1], entry[0]);
@@ -155,7 +197,7 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
     .attr("stroke", (d) => platformColors[d.platform] ?? "#333")
     .attr("stroke-width", 2)
     .on("mouseover", (event, d) => {
-      d3.selectAll(".chart-range-rect")
+      d3.selectAll(".chart-range-rect") // highlight the corresponding range
         .transition()
         .duration(150)
         .attr("fill-opacity", 0.02);
@@ -235,6 +277,34 @@ function drawUncertainty(svg, data, y, width, height) {
   //   .attr("class", "chart-uncertainty-label")
   //   .text("Possible market range");
 }
+
+function drawCursorLine(svg, data, x, y, width) {
+    
+    svg
+    .append("line")
+    .attr("class", "cursor-line")
+    .attr("x1", 70)
+    .attr("x2", width - 40)
+    .attr("y1", 0)
+    .attr("y2", 0)
+    .attr("stroke", "#d2d2d2")
+    .attr("stroke-width", 1.5)
+    .style("opacity", 0);
+
+    const label = svg
+    .append("text")
+    .attr("x", width - 35)
+    .attr("y", 0)
+    .attr("class", "cursor-line-label")
+    .attr("text-anchor", "start")
+    .text(`None`)
+    .style("opacity", 0);
+}
+
+
+
+
+
 
 function drawMedianLine(svg, data, x, y, width) {
   const prices = data.map((d) => d.price).sort((a, b) => a - b);

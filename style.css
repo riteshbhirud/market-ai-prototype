@@ -228,6 +228,13 @@ body {
   font-family: var(--font-sans);
 }
 
+
+.cursor-line-label {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-family: var(--font-sans);
+}
+
 /* --- Legend --- */
 #legend {
   margin-bottom: 24px;

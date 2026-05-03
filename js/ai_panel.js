@@ -6,20 +6,6 @@
  * - contestable: cognitive forcing — user records interpretation first, then reveal/hide AI, etc.
  */
 
-const baseInterpretation = {
-  summary: "",
-  plan: "", 
-  current_estimate  : 720,
-  current_high_range  : 825,
-  current_low_range : 650,
-  current_trend : "decreasing",
-  evidence: [],
-  assumptions: [],
-  limitations: [], 
-  alternatives: [],
-  reasoning_steps: []
-};
-
 export function loadAI(condition, interpretation, unlockAICallback) {
   const panel = document.getElementById("interpretation");
   if (!panel || !interpretation) return;
