@@ -20,7 +20,7 @@ export function loadAI(condition, interpretation, unlockAICallback) {
 
   if (condition === "control") {
     panel.innerHTML = `
-      <h3 class="ai-title">Generated Interpretation</h3>
+      <h3 class="ai-title">AI Interpretation</h3>
       <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
       <p class="interpretation-note">This system supports interpretation, not recommendation. It does not tell you what to buy or what price is "correct."</p>
     `;
@@ -29,7 +29,7 @@ export function loadAI(condition, interpretation, unlockAICallback) {
 
   if (condition === "inspectable") {
     panel.innerHTML = `
-      <h3 class="ai-title">Generated Interpretation</h3>
+      <h3 class="ai-title">AI Interpretation</h3>
       <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
       ${planHtml}
       ${reasoningHtml}

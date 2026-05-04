@@ -22,7 +22,7 @@ export async function interpret(data, useAI) {
   if (useAI) {
     return interpret_AI()
   }
-  const sales = data.filter((d) => d.listing_type === "sale");
+  const sales = data.filter((d) => d.listing_type === "sold");
   const unsold = data.filter((d) => d.listing_type === "unsold");
   const auctions = data.filter((d) => d.listing_type === "auction");
   const obo = data.filter((d) => d.listing_type === "obo");

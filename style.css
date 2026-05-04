@@ -228,6 +228,23 @@ body {
   font-family: var(--font-sans);
 }
 
+.cursor-lineX {
+  stroke: var(#78716c);
+  stroke-dasharray: 5 4;
+  stroke-width: 1.5;
+}
+
+.cursor-line-labelX {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-family: var(--font-sans);
+}
+
+.cursor-line {
+  stroke: var(#78716c);
+  stroke-dasharray: 5 4;
+  stroke-width: 1.5;
+}
 
 .cursor-line-label {
   font-size: 11px;

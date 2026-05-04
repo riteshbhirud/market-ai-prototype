@@ -82,10 +82,14 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
     .style("max-width", "100%")                 // 👈 responsive
     .style("height", "auto");
 
-  const x = d3
-    .scaleTime()
-    .domain(d3.extent(data, (d) => new Date(d.date)))
-    .range([70, width - 40]);
+    const xLatest = d3.max(data, (d) => new Date(d.date));
+    const xPadded = new Date(xLatest);
+    xPadded.setMonth(xPadded.getMonth() + 3);
+
+    const x = d3
+      .scaleTime()
+      .domain([d3.min(data, (d) => new Date(d.date)), xPadded])
+      .range([70, width - 40]);
 
   const yMin = d3.min(data, (d) => d.price) - 20;
   const yMax = d3.max(data, (d) => d.price) + 20;
@@ -113,36 +117,55 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
   const platforms = [...new Set(data.map((d) => d.platform))];
   const platformColors = getPlatformColors(platforms);
 
+  /// Grey BG
   svg
   .append("rect")
-  .attr("x", 70)                         // align with y-axis
-  .attr("y", 40)                         // align with top padding
-  .attr("width", width - 110)            // (70 left + 40 right margin)
-  .attr("height", height - 100)          // (40 top + 60 bottom margin)
-  .attr("fill", "#f5f5f5");              // light grey
+  .attr("x", 70)                       
+  .attr("y", 40)                      
+  .attr("width", width - 110)           
+  .attr("height", height - 100)         
+  .attr("fill", "#f5f5f5"); 
+  
+  
+  drawLatestDate(svg, data, x, y, width, height, xLatest);
 
   // ---------------- DRAW AI OR MEDIAN ----------------
   if (aiUnlocked && aiVisible) {
     const latestDate = d3.max(data, d => new Date(d.date));
-    const oneMonthBefore = new Date(latestDate);
-    oneMonthBefore.setMonth(oneMonthBefore.getMonth() - 3);
+    const oneMonthAfter = new Date(latestDate);
+    oneMonthAfter.setMonth(oneMonthAfter.getMonth() + 3);
 
     Object.entries(ai_metrics).forEach(([cond, range]) => {
       console.log("entry:"+ JSON.stringify([range, cond]))
       console.log("range:"+ JSON.stringify(range))
       console.log("cond:"+ JSON.stringify(cond))
-      drawAIBounds(svg, x, y, width, cond, range,oneMonthBefore,latestDate);
+      drawAIBounds(svg, x, y, width, cond, range,latestDate, oneMonthAfter);
     });
   } 
   drawMedianLine(svg, data, x, y, width);
   
-  drawCursorLine(svg, data, x, y, width);
+  drawCursorLine(svg, data, x, y, width, height);
 
   const cursorLine = svg.selectAll(".cursor-line");
+  const cursorLineX = svg.selectAll(".cursor-lineX");
+
   const cursorLineLabel = svg.selectAll(".cursor-line-label");
+  const cursorLineLabelX = svg.selectAll(".cursor-line-labelX");
+
   svg
     .on("mouseover", (event) => {
-      const [x, yVal] = d3.pointer(event);
+      const [xVal, yVal] = d3.pointer(event);
+
+      cursorLineX
+        .style("opacity", 1)
+        .attr("x1", xVal)
+        .attr("x2", xVal);
+
+      cursorLineLabelX
+        .style("opacity", 1)
+        .attr("x", xVal-65)
+        .attr("y", yVal - 20)
+        .text(`${x.invert(xVal).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}`); // format date to MM/DD/YYYY
 
       cursorLine
         .style("opacity", 1)
@@ -151,23 +174,36 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
 
       cursorLineLabel
         .style("opacity", 1)
-        .attr("x", x-30)
-        .text(`$${Math.round(y.invert(yVal))}`)
-        .attr("y", yVal - 5);
+        .attr("x", xVal-30)
+        .attr("y", yVal - 5)
+        .text(`$${Math.round(y.invert(yVal))}`);
     })
     .on("mousemove", (event) => {
-      const [x, yVal] = d3.pointer(event);
+      const [xVal, yVal] = d3.pointer(event);
+
+      cursorLineX
+        .style("opacity", 1)
+        .attr("x1", xVal)
+        .attr("x2", xVal);
+
+      cursorLineLabelX
+        .style("opacity", 1)
+        .attr("x", xVal-65)
+        .attr("y", yVal - 20)
+        .text(`${x.invert(xVal).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}`); // format date to MM/DD/YYYY
 
       cursorLine
         .attr("y1", yVal)
         .attr("y2", yVal);
 
       cursorLineLabel
-        .attr("x", x-30)
-        .text(`$${Math.round(y.invert(yVal))}`)
-        .attr("y", yVal-5);
+        .attr("x", xVal-30)
+        .attr("y", yVal-5)
+        .text(`$${Math.round(y.invert(yVal))}`);
     })
     .on("mouseout", () => {
+      cursorLineX.style("opacity", 0);
+      cursorLineLabelX.style("opacity", 0);
       cursorLine.style("opacity", 0);
       cursorLineLabel.style("opacity", 0);
     });
@@ -216,6 +252,7 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
           `<b>$${d.price}</b><br>
            Type: ${d.listing_type}<br>
            Condition: ${d.condition}<br>
+           Date: ${d.date}<br>
            Platform: ${d.platform}<br>
            ${d.description}`
         );
@@ -278,8 +315,53 @@ function drawUncertainty(svg, data, y, width, height) {
   //   .text("Possible market range");
 }
 
-function drawCursorLine(svg, data, x, y, width) {
+
+function drawLatestDate(svg, data, x, y, width, height, latestDate) {
+  const xPos = x(new Date(latestDate));
+
+
+  svg
+  .append("rect")
+  .attr("x", xPos)                       
+  .attr("y", 40)                      
+  .attr("width", width - xPos - 40)           
+  .attr("height", height - 100)         
+  .attr("fill", "#ffffffc6"); 
+
+  svg
+    .append("line")
+    .attr("class", "median-line")
+    .attr("x1", xPos)
+    .attr("x2", xPos)
+    .attr("y1", 40)
+    .attr("y2", height - 60)
+    .attr("stroke", "#ff5f5f55")
+    .attr("stroke-width", 1.5);
+}
+
+function drawCursorLine(svg, data, x, y, width, height) {
+      // vert cursor line
+    svg
+    .append("line")
+    .attr("class", "cursor-lineX")
+    .attr("x1", 0)
+    .attr("x2", 0)
+    .attr("y1", 40)
+    .attr("y2", height - 60)
+    .attr("stroke", "#d2d2d2")
+    .attr("stroke-width", 1.5)
+    .style("opacity", 0);
     
+    svg
+    .append("text")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("class", "cursor-line-labelX")
+    .attr("text-anchor", "start")
+    .text(`None`)
+    .style("opacity", 0);
+
+  // horizontal cursor line
     svg
     .append("line")
     .attr("class", "cursor-line")
@@ -291,9 +373,9 @@ function drawCursorLine(svg, data, x, y, width) {
     .attr("stroke-width", 1.5)
     .style("opacity", 0);
 
-    const label = svg
+    svg
     .append("text")
-    .attr("x", width - 35)
+    .attr("x", 0)
     .attr("y", 0)
     .attr("class", "cursor-line-label")
     .attr("text-anchor", "start")
@@ -424,7 +506,7 @@ function drawAIBounds(svg, x, y, width, cond, range, earlyDate, laterDate) {
       .attr("class", "chart-uncertainty-label")
       .attr("text-anchor", "start")
       .style("fill", cond_color)
-      .text(`${Math.round(unconverted_high_range)}`);
+      .text(`$${Math.round(unconverted_high_range)}`);
 
     let h_bbox = h_label.node().getBBox();
 
@@ -458,7 +540,7 @@ function drawAIBounds(svg, x, y, width, cond, range, earlyDate, laterDate) {
       .attr("class", "chart-uncertainty-label")
       .attr("text-anchor", "start")
       .style("fill", cond_color)
-      .text(`${Math.round(unconverted_low_range)}`);
+      .text(`$${Math.round(unconverted_low_range)}`);
 
     const l_bbox = l_label.node().getBBox();
 
@@ -484,5 +566,15 @@ function drawAIBounds(svg, x, y, width, cond, range, earlyDate, laterDate) {
   .attr("height", low_range - high_range)
   .style("fill", cond_color)
   .attr("fill-opacity", 0.05); 
+
+  // svg
+  //   .append("text")
+  //   .attr("x", width - 70)
+  //   .attr("y", (low_range + high_range)/2)
+  //   .attr("class", "chart-uncertainty-label")
+  //   .attr("text-anchor", "end")
+  //   .style("fill", cond_color)
+  //   .text(`Ai Predicted Price Range`);
+
   }
 }

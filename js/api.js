@@ -41,9 +41,11 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
 
       const formattedRanges = Object.entries(gradeRanges)
         .map(([grade, [low, high]]) => `${grade}: $${low}–$${high}`)
-        .join("\n");
+        .join(", and ");
 
-      const summary = `The AI Model estimates reasonable current prices at: ${formattedRanges}. This is based on ${data.length} records (${data.length} confirmed sale${data.length > 1 ? "s" : ""}).`;      
+      let saleCount =  (data.length) - (data.filter((d) => d.listing_type === "unsold").length);
+      let totalCount = data.length;
+      const summary = `Our AI Model estimates that the current market value (past three months) is : ${formattedRanges}. This is based on ${totalCount} records (${saleCount} confirmed sale${saleCount > 1 ? "s" : ""}).`;      
       return {
         summary: summary,
         evidence: interpretation.evidence,
@@ -53,8 +55,8 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
         plan: "",
         reasoning_steps: interpretation.reasoning_steps,
         grade_chart: interpretation.grade_chart,
-        saleCount: data.length,
-        totalCount: data.length, // might not be accurate
+        saleCount: saleCount,
+        totalCount: totalCount, // might not be accurate
         current_estimate: interpretation.current_estimate,
         current_trend: interpretation.current_trend,
         current_high_range: interpretation.current_high_range,
