@@ -10,11 +10,17 @@ import os
 import re
 import urllib.request
 import urllib.error
+import urllib.parse
 
 # Default: Ollama on localhost; override with env OLLAMA_HOST
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2")
 INFERENCE_TIMEOUT = int(os.environ.get("INFERENCE_TIMEOUT", "90"))
+
+# Optional proxy target for the external FastAPI interpretation-engine service.
+# This helps when the browser cannot reach the service due to CORS/network.
+INTERPRETATION_ENGINE_API = os.environ.get("INTERPRETATION_ENGINE_API", "").rstrip("/")
+PROXY_TIMEOUT = int(os.environ.get("PROXY_TIMEOUT", str(INFERENCE_TIMEOUT)))
 
 # SCoT prompt template (Structured Chain of Thought)
 SCOT_APPRAISER = """You are an expert in collectibles with a knowledge of market trends.
@@ -185,7 +191,7 @@ def interpret_with_llm(data):
 
 
 def main():
-    """Run a minimal HTTP server that exposes POST /interpret."""
+    """Run a minimal HTTP server that exposes POST /interpret (Ollama) and optional proxy."""
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
     class InferenceHandler(BaseHTTPRequestHandler):
@@ -197,24 +203,58 @@ def main():
             self.end_headers()
 
         def do_POST(self):
-            if self.path != "/interpret":
-                self.send_response(404)
-                self.end_headers()
-                return
             try:
                 length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(length) if length else b""
                 payload = json.loads(body.decode("utf-8"))
-                data = payload.get("data") or []
             except (ValueError, json.JSONDecodeError) as e:
                 self._send_json(400, {"error": f"Invalid request: {e}"})
                 return
 
-            result, err = interpret_with_llm(data)
-            if err:
-                self._send_json(503, {"error": err, "fallback": True})
+            if self.path == "/interpret":
+                data = payload.get("data") or []
+                result, err = interpret_with_llm(data)
+                if err:
+                    self._send_json(503, {"error": err, "fallback": True})
+                    return
+                self._send_json(200, result)
                 return
-            self._send_json(200, result)
+
+            # Same-origin proxy to external FastAPI interpretation-engine.
+            # Expected browser request: POST /interpret-engine with JSON body (already shaped by js/api.js)
+            if self.path == "/interpret-engine":
+                if not INTERPRETATION_ENGINE_API:
+                    self._send_json(503, {"error": "INTERPRETATION_ENGINE_API not configured", "fallback": True})
+                    return
+                try:
+                    proxied = self._proxy_post_json(f"{INTERPRETATION_ENGINE_API}/interpret", payload)
+                    self._send_json(proxied["status"], proxied["json"])
+                except Exception as e:
+                    self._send_json(503, {"error": f"Proxy failed: {e}", "fallback": True})
+                return
+
+            self.send_response(404)
+            self.end_headers()
+
+        def _proxy_post_json(self, url, obj):
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(obj).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=PROXY_TIMEOUT) as resp:
+                    raw = resp.read().decode("utf-8")
+                    return {"status": resp.status, "json": json.loads(raw) if raw else {}}
+            except urllib.error.HTTPError as e:
+                raw = e.read().decode("utf-8") if hasattr(e, "read") else ""
+                parsed = None
+                try:
+                    parsed = json.loads(raw) if raw else None
+                except Exception:
+                    parsed = None
+                return {"status": e.code, "json": parsed or {"error": raw or f"HTTP {e.code}: {e.reason}"}}
 
         def _send_json(self, status, obj):
             self.send_response(status)
@@ -230,6 +270,8 @@ def main():
     server = HTTPServer(("", port), InferenceHandler)
     print(f"Inference API at http://localhost:{port} (Ollama: {OLLAMA_HOST}, model: {OLLAMA_MODEL})")
     print("POST /interpret with JSON body: {\"data\": [...]} (SCoT reasoning)")
+    if INTERPRETATION_ENGINE_API:
+        print(f"POST /interpret-engine proxies to: {INTERPRETATION_ENGINE_API}/interpret")
     server.serve_forever()
 
 

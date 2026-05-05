@@ -4,8 +4,8 @@
   "description": "AI-assisted marketplace interpretation prototype",
   "type": "module",
   "scripts": {
-    "test": "node tests/interpretation_engine.test.js && python3 -m unittest discover -s tests -v",
-    "test:js": "node tests/interpretation_engine.test.js",
+    "test": "node tests/interpretation_engine.test.js && node tests/api_provider.test.js && python3 -m unittest discover -s tests -v",
+    "test:js": "node tests/interpretation_engine.test.js && node tests/api_provider.test.js",
     "test:api": "python3 -m unittest discover -s tests -v"
   }
 }
