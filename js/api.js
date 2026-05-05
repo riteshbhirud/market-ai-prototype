@@ -171,11 +171,33 @@ function circuitRecordSuccess() {
   circuit.openUntil = 0;
 }
 
+function buildListingsSnippet(data, { maxRows = 25, descMax = 120 } = {}) {
+  const rows = Array.isArray(data) ? data : [];
+  const withT = rows
+    .map((d) => ({ d, t: new Date(d?.date).getTime() }))
+    .filter((x) => Number.isFinite(x.t))
+    .sort((a, b) => b.t - a.t);
+
+  const picked = (withT.length ? withT.map((x) => x.d) : rows).slice(0, maxRows);
+
+  return picked.map((d) => ({
+    id: d?.id ?? null,
+    date: d?.date != null ? String(d.date) : null,
+    listing_type: d?.listing_type != null ? String(d.listing_type) : null,
+    condition: d?.condition != null ? String(d.condition) : null,
+    platform: d?.platform != null ? String(d.platform) : null,
+    grade: d?.grade != null ? String(d.grade) : null,
+    price: d?.price != null && Number.isFinite(Number(d.price)) ? Number(d.price) : null,
+    description: d?.description ? String(d.description).slice(0, descMax) : null,
+  }));
+}
+
 async function fetchInterpretation_FastApi(data) {
   if (!INTERPRETATION_ENGINE_API) throw new Error("FastAPI not configured");
   if (circuitIsOpen()) throw new Error("FastAPI circuit open");
 
   const market_summary = compactMarketSummary(data);
+  const listings_snippet = buildListingsSnippet(data);
   const payload = {
     schema_version: SCHEMA_VERSION,
     correlation_id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -184,6 +206,7 @@ async function fetchInterpretation_FastApi(data) {
       allow_followup: false,
     },
     market_summary,
+    listings_snippet,
   };
 
   const base = INTERPRETATION_ENGINE_API.replace(/\/+$/, "");
