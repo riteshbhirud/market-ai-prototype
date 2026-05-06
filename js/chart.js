@@ -33,7 +33,10 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
 
   const MIN_WIDTH = 600;
   const width = Math.max(available || 800, MIN_WIDTH);
-  const height = window.innerWidth < 900 ? 480 : 420;
+  // Adapt chart height to viewport so the page fits without scrolling.
+  // Floor of 320px, otherwise scale with viewport.
+  const vh = window.innerHeight || 800;
+  const height = Math.max(320, Math.min(380, Math.round(vh * 0.45)));
 
   const aiUnlocked = showAI;
 
@@ -43,17 +46,26 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
   const chart = d3.select("#chart").html("");
 
   // ---------------- TITLE ----------------
-  chart.append("h2").text("Item "+(currentTestIdx+1)+": " +item_name);
+  const titleRow = chart.append("div").attr("class", "chart-title-row");
+  const titleLeft = titleRow.append("div").attr("class", "chart-title-left");
+  titleLeft.append("p").attr("class", "chart-eyebrow").text("Visualization");
+  const h2 = titleLeft.append("h2");
+  h2.append("span").text("Price history");
+  h2.append("span")
+    .attr("class", "info-icon")
+    .attr("tabindex", "0")
+    .attr(
+      "data-tooltip",
+      "Each point is a listing on a marketplace, plotted by date and price. Shape shows listing type, color shows condition, outline shows platform. The shaded band on the right is the AI's price estimate; the dashed line is the median observed price."
+    )
+    .text("i");
 
   // ---------------- BUTTON ----------------
-  let btn = chart.select("#toggle-ai-graph");
-
-  if (btn.empty()) {
-    btn = chart
-      .append("button")
-      .attr("id", "toggle-ai-graph")
-      .attr("class", "toggle_button toggle_ai_button");
-  }
+  const titleRight = titleRow.append("div").attr("class", "chart-title-right");
+  let btn = titleRight
+    .append("button")
+    .attr("id", "toggle-ai-graph")
+    .attr("class", "toggle_button toggle_ai_button");
 
   btn
     .classed("disabled", !aiUnlocked)
