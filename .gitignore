@@ -8,6 +8,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.env
 
 # Python
 __pycache__/
@@ -19,3 +20,4 @@ env/
 
 # Logs
 *.log
+

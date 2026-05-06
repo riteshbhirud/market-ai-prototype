@@ -8,9 +8,10 @@ const SPARSE_DATA_THREHOLD = 4
 /// ADD NEW TESTS HERE WITH THEIR CORRESPONDING DATA AND PRE-MADE SUMMARY
 ///////PRESET DATA////////
 const preset_test_info = [
+
     {"dom-elem-id": "load-task-1", "name": "Vinyl Record 1",
     "marketplace_item_filename":"task1.json", 
-    "interpretation_filename": "task1.json"},
+    "interpretation_filename": "none"},
 
     {"dom-elem-id": "load-task-2", "name": "Vinyl Record 2",
     "marketplace_item_filename":"task2.json", 
@@ -177,8 +178,16 @@ async function goToTestNumber(idx) {
 
   showAI = (condition=="contestable")? false : true;
   const next_test = preset_test_info[(idx)%preset_test_info.length]
+  
   const marketplace_item = await loadTestData("test_data/"+next_test.marketplace_item_filename);
-  await render(marketplace_item, next_test.name, idx, true, next_test.interpretation_filename);
+  const usePreset = next_test.interpretation_filename !== "none";
+  await render(
+    marketplace_item,
+    next_test.name,
+    idx,
+    usePreset,
+    usePreset ? next_test.interpretation_filename : ""
+  );
   setupDataControls();
 }
 
