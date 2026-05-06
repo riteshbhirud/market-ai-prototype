@@ -7,20 +7,38 @@
   <title>Collectible Market Signals</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <header class="page-header">
-    <h1>Collectible Marketplace Signals</h1>
-    <p class="tagline">Interpretation support, not recommendation — make sense of incomplete data and stay in the loop.</p>
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <span class="brand-name">Collectible Market Signals</span>
+          <span class="brand-tag">Interpretation support, not recommendation</span>
+        </div>
+      </div>
+      <div class="top-bar-meta">
+        <span class="condition-badge" id="condition-badge"></span>
+      </div>
+    </div>
   </header>
 
   <div class="main-layout">
     <div class="left-panel">
-      <div id="data-controls"></div>
+      <div class="panel-toolbar">
+        <div id="data-controls"></div>
+      </div>
+      <div id="item-description"></div>
       <div id="warning"></div>
       <div id="chart"></div>
 
@@ -36,6 +54,12 @@
       <div id="interpretation"></div>
     </div>
   </div>
+
+  <footer class="page-footer">
+    <span>Collectible Market Signals · HCI research prototype</span>
+    <span class="page-footer-sep">·</span>
+    <span>Interpretation, not recommendation</span>
+  </footer>
 
   <div id="tooltip"></div>
 

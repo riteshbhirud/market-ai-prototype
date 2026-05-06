@@ -10,19 +10,23 @@ const SPARSE_DATA_THREHOLD = 4
 const preset_test_info = [
 
     {"dom-elem-id": "load-task-1", "name": "Vinyl Record 1",
-    "marketplace_item_filename":"task1.json", 
-    "interpretation_filename": "none"},
+    "description": "Pink Floyd — The Dark Side of the Moon, NM pressing across multiple platforms.",
+    "marketplace_item_filename":"task1.json",
+    "interpretation_filename": "task1.json"},
 
     {"dom-elem-id": "load-task-2", "name": "Vinyl Record 2",
-    "marketplace_item_filename":"task2.json", 
+    "description": "Vintage VG+ pressing tracked across Discogs and Amazon over a long history.",
+    "marketplace_item_filename":"task2.json",
     "interpretation_filename": "task2.json"},
 
     {"dom-elem-id": "load-task-3", "name": "Vinyl Record 3",
-    "marketplace_item_filename":"task3.json", 
+    "description": "Mid-condition collectible with mixed listing types and platforms.",
+    "marketplace_item_filename":"task3.json",
     "interpretation_filename": "task3.json"},
-    
+
     {"dom-elem-id": "load-task-4", "name": "Vinyl Record 4",
-    "marketplace_item_filename":"task4.json", 
+    "description": "Sparse-data collectible — interpretation will surface higher uncertainty.",
+    "marketplace_item_filename":"task4.json",
     "interpretation_filename": "task4.json"},
   // {"dom-elem-id": "load-test-7", "name": "Jackie Robinson Card (Grade 7)",
   //   "marketplace_item_filename":"empty.json", 
@@ -48,7 +52,8 @@ const condition = params.get("condition") || "control";
 let currentTestIdx = -1
 let currentData = []; // re-renders with data
 let currentName = "Choose an Item to Begin"; // re-renders with data
-let currentInterpretation = ""; 
+let currentDescription = "";
+let currentInterpretation = "";
 let currentAiGraphData = {};
 let showAI = (condition=="contestable")? false : true;
 let currentRequestID = 0
@@ -59,18 +64,20 @@ let rawTableListenerAdded = false;
 ////////////////////////
 
 // renders chart based on public variables
-async function render(data, item_name, test_idx, usePresetInterpretation = false, presetInterpretationFileName = "") {
+async function render(data, item_name, test_idx, usePresetInterpretation = false, presetInterpretationFileName = "", item_description = "") {
   const requestID = ++currentRequestID;
-  
+
   // assign public variables
   currentTestIdx = test_idx
   currentData = data;
   currentAiGraphData = {}
   currentName = item_name
+  currentDescription = item_description;
 
+  setupItemDescription(currentName, currentDescription, currentData);
   drawChart(currentData, currentName, currentTestIdx, currentAiGraphData, { showAI }); // draws chart with d3
   setupRawTable(currentData); // sets up the table below the graph for raw data
-  checkSparsity(currentData); 
+  checkSparsity(currentData);
 
   // if panel exists, set loading message
   const panel = document.getElementById("interpretation");
@@ -108,46 +115,235 @@ function checkSparsity(data) {
   }
 }
 
+function setupItemDescription(name, description, data) {
+  const container = document.getElementById("item-description");
+  if (!container) return;
+
+  const totalCount = data.length;
+  const saleCount = data.filter((d) => d.listing_type !== "unsold").length;
+  const platforms = [...new Set(data.map((d) => d.platform))];
+
+  const prices = data.map((d) => d.price).filter((p) => Number.isFinite(p)).sort((a, b) => a - b);
+  const median = prices.length
+    ? (prices.length % 2 === 0
+        ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
+        : prices[Math.floor(prices.length / 2)])
+    : null;
+  const minPrice = prices.length ? prices[0] : null;
+  const maxPrice = prices.length ? prices[prices.length - 1] : null;
+
+  const dateRange = (() => {
+    if (!data.length) return "";
+    const dates = data.map((d) => new Date(d.date)).filter((d) => !isNaN(d));
+    if (!dates.length) return "";
+    const min = new Date(Math.min(...dates));
+    const max = new Date(Math.max(...dates));
+    const fmt = (d) => d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    return `${fmt(min)} – ${fmt(max)}`;
+  })();
+
+  const fmtPrice = (n) => (n == null ? "—" : `$${Math.round(n)}`);
+
+  container.innerHTML = `
+    <div class="hero-head">
+      <span class="hero-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <circle cx="12" cy="12" r="3.5"></circle>
+          <circle cx="12" cy="12" r="0.8" fill="currentColor"></circle>
+        </svg>
+      </span>
+      <div class="hero-text">
+        <p class="hero-eyebrow">Marketplace item</p>
+        <p class="hero-title">${name}</p>
+        ${description ? `<p class="hero-desc">${description}</p>` : ""}
+      </div>
+      <span class="hero-range" aria-label="Date range">${dateRange}</span>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi" data-tooltip="Median price across all listings, sold and unsold.">
+        <span class="kpi-label">Median price</span>
+        <span class="kpi-value">${fmtPrice(median)}</span>
+      </div>
+      <div class="kpi" data-tooltip="Lowest and highest price observed in the dataset.">
+        <span class="kpi-label">Range</span>
+        <span class="kpi-value">${fmtPrice(minPrice)} <span class="kpi-sep">–</span> ${fmtPrice(maxPrice)}</span>
+      </div>
+      <div class="kpi" data-tooltip="Total number of listings in the dataset, including unsold ones.">
+        <span class="kpi-label">Listings</span>
+        <span class="kpi-value">${totalCount} <span class="kpi-sub">(${saleCount} sold)</span></span>
+      </div>
+      <div class="kpi" data-tooltip="Number of distinct marketplaces represented.">
+        <span class="kpi-label">Platforms</span>
+        <span class="kpi-value">${platforms.length}</span>
+      </div>
+    </div>
+  `;
+}
+
+// Column metadata: type drives comparator + filter input behavior.
+const TABLE_COLUMNS = [
+  { key: "id", label: "ID", type: "number" },
+  { key: "date", label: "Date", type: "date" },
+  { key: "price", label: "Price", type: "number" },
+  { key: "listing_type", label: "Listing type", type: "string" },
+  { key: "condition", label: "Condition", type: "string" },
+  { key: "platform", label: "Platform", type: "string" },
+  { key: "description", label: "Description", type: "string" },
+];
+
+// Per-table state survives between toggles within a session.
+let tableSortKey = null;
+let tableSortDir = "asc"; // "asc" | "desc"
+let tableFilters = {}; // { colKey: filterString }
+
+function compareCellValues(a, b, type) {
+  const aNull = a == null || a === "";
+  const bNull = b == null || b === "";
+  if (aNull && bNull) return 0;
+  if (aNull) return 1;
+  if (bNull) return -1;
+  if (type === "number") return Number(a) - Number(b);
+  if (type === "date") return new Date(a) - new Date(b);
+  return String(a).localeCompare(String(b), undefined, { sensitivity: "base", numeric: true });
+}
+
+function rowMatchesFilters(row) {
+  for (const [colKey, query] of Object.entries(tableFilters)) {
+    if (!query) continue;
+    const raw = row[colKey];
+    const cell = raw == null ? "" : String(raw);
+    if (!cell.toLowerCase().includes(query.toLowerCase())) return false;
+  }
+  return true;
+}
+
 function setupRawTable(data) {
   const toggleBtn = document.getElementById("toggle-table");
   const tableContainer = document.getElementById("raw-table");
 
   if (!toggleBtn || !tableContainer) return;
-  let visible = false;
+  let visible = !tableContainer.classList.contains("hidden");
 
   function renderTable() {
     tableContainer.innerHTML = "";
-    const columns = [
-      "id",
-      "date",
-      "price",
-      "listing_type",
-      "condition",
-      "platform",
-      "description",
-    ];
-    const table = d3
-      .select(tableContainer)
-      .append("table")
-      .attr("class", "raw-transaction-table");
 
-    table
-      .append("thead")
-      .append("tr")
-      .selectAll("th")
-      .data(columns)
-      .join("th")
-      .text((d) => d.replace(/_/g, " "));
+    const filteredRows = currentData.filter(rowMatchesFilters);
 
-    table
-      .append("tbody")
-      .selectAll("tr")
-      .data(currentData)
-      .join("tr")
-      .selectAll("td")
-      .data((d) => columns.map((c) => d[c]))
-      .join("td")
-      .text((d) => (d != null ? String(d) : ""));
+    if (tableSortKey) {
+      const col = TABLE_COLUMNS.find((c) => c.key === tableSortKey);
+      const type = col ? col.type : "string";
+      filteredRows.sort((a, b) => {
+        const cmp = compareCellValues(a[tableSortKey], b[tableSortKey], type);
+        return tableSortDir === "asc" ? cmp : -cmp;
+      });
+    }
+
+    const totalCount = currentData.length;
+    const shownCount = filteredRows.length;
+
+    const summaryBar = document.createElement("div");
+    summaryBar.className = "table-summary";
+    const activeFilters = Object.entries(tableFilters).filter(([, v]) => v);
+    summaryBar.innerHTML = `
+      <span class="table-summary-count">Showing <strong>${shownCount}</strong> of ${totalCount} listings</span>
+      ${activeFilters.length ? `<button type="button" class="table-clear-filters">Clear filters</button>` : ""}
+    `;
+    tableContainer.appendChild(summaryBar);
+
+    const table = document.createElement("table");
+    table.className = "raw-transaction-table";
+
+    const thead = document.createElement("thead");
+
+    const headerRow = document.createElement("tr");
+    TABLE_COLUMNS.forEach((col) => {
+      const th = document.createElement("th");
+      th.className = "table-th-sort";
+      th.dataset.col = col.key;
+      const isSorted = tableSortKey === col.key;
+      const arrow = isSorted ? (tableSortDir === "asc" ? "▲" : "▼") : "↕";
+      th.innerHTML = `
+        <span class="th-label">${col.label}</span>
+        <span class="th-sort-indicator${isSorted ? " active" : ""}">${arrow}</span>
+      `;
+      th.addEventListener("click", () => {
+        if (tableSortKey === col.key) {
+          tableSortDir = tableSortDir === "asc" ? "desc" : "asc";
+        } else {
+          tableSortKey = col.key;
+          tableSortDir = "asc";
+        }
+        renderTable();
+      });
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    const filterRow = document.createElement("tr");
+    filterRow.className = "table-filter-row";
+    TABLE_COLUMNS.forEach((col) => {
+      const td = document.createElement("th");
+      const input = document.createElement("input");
+      input.type = "search";
+      input.className = "table-filter-input";
+      input.placeholder = `Filter ${col.label.toLowerCase()}`;
+      input.value = tableFilters[col.key] || "";
+      input.setAttribute("aria-label", `Filter by ${col.label}`);
+      input.addEventListener("input", (e) => {
+        const v = e.target.value;
+        if (v) tableFilters[col.key] = v;
+        else delete tableFilters[col.key];
+        // Re-render but keep focus on this input.
+        const colKey = col.key;
+        renderTable();
+        const next = tableContainer.querySelector(`.table-filter-input[data-col="${colKey}"]`);
+        if (next) {
+          next.focus();
+          next.setSelectionRange(next.value.length, next.value.length);
+        }
+      });
+      input.dataset.col = col.key;
+      td.appendChild(input);
+      filterRow.appendChild(td);
+    });
+    thead.appendChild(filterRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    if (filteredRows.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = TABLE_COLUMNS.length;
+      td.className = "table-empty";
+      td.textContent = "No listings match the current filters.";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      filteredRows.forEach((row) => {
+        const tr = document.createElement("tr");
+        TABLE_COLUMNS.forEach((col) => {
+          const td = document.createElement("td");
+          const v = row[col.key];
+          td.textContent = v == null ? "" : String(v);
+          if (col.type === "number" || col.type === "date") {
+            td.classList.add("td-numeric");
+          }
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+    table.appendChild(tbody);
+    tableContainer.appendChild(table);
+
+    const clearBtn = tableContainer.querySelector(".table-clear-filters");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", () => {
+        tableFilters = {};
+        renderTable();
+      });
+    }
   }
 
   if (!rawTableListenerAdded) {
@@ -157,14 +353,12 @@ function setupRawTable(data) {
       tableContainer.classList.toggle("hidden", !visible);
       toggleBtn.textContent = visible
         ? "Hide transaction table"
-        : "Show all transactions";
+        : "Show raw transaction table";
       if (visible) renderTable();
     });
   }
 
-  if (!tableContainer.classList.contains("hidden") && tableContainer.querySelector("table")) {
-    renderTable();
-  }
+  if (visible) renderTable();
 }
 
 // loads test data depending on the preset-test-info struct
@@ -180,14 +374,7 @@ async function goToTestNumber(idx) {
   const next_test = preset_test_info[(idx)%preset_test_info.length]
   
   const marketplace_item = await loadTestData("test_data/"+next_test.marketplace_item_filename);
-  const usePreset = next_test.interpretation_filename !== "none";
-  await render(
-    marketplace_item,
-    next_test.name,
-    idx,
-    usePreset,
-    usePreset ? next_test.interpretation_filename : ""
-  );
+  await render(marketplace_item, next_test.name, idx, true, next_test.interpretation_filename, next_test.description || "");
   setupDataControls();
 }
 
@@ -195,23 +382,18 @@ function setupDataControls() {
   const container = document.getElementById("data-controls");
   if (!container) return;
 
+  const arrowLeft = `<span class="nav-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></span>`;
+  const arrowRight = `<span class="nav-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>`;
+
+  const prevDisabled = currentTestIdx <= 0 ? "disabled" : "";
+  const nextDisabled = currentTestIdx >= preset_test_info.length - 1 ? "disabled" : "";
+
   container.innerHTML = `
-    <div class="data-source-label">Marketplace Item <span style="color: blue; font-weight: bold;">${currentTestIdx+1}</span> of ${preset_test_info.length}</div>
+    <div class="data-source-label">Item <span class="item-counter">${currentTestIdx+1}</span> of ${preset_test_info.length}</div>
     <div class="data-source-buttons">
-      <button type="button" ${currentTestIdx > 0 ? "" : `class="disabled" `} id="previous-test">Previous Item</button>
-      <button type="button" ${currentTestIdx < preset_test_info.length-1  ? "":`class="disabled" `}id="next-test">Next Item</button>
-      ${
-        ""
-        //preset_test_info.reduce(
-        //(total_string, test) => total_string + `<button type="button" id="${test["dom-elem-id"]}">${test.name}</button>`, "")
-      }
-      ${
-        "" // <button type="button" id="gen-random">Generate random data</button>
-      }
+      <button type="button" class="${prevDisabled}" id="previous-test" aria-label="Previous item" data-tooltip="Previous item">${arrowLeft}</button>
+      <button type="button" class="${nextDisabled}" id="next-test" aria-label="Next item" data-tooltip="Next item">${arrowRight}</button>
     </div>
-    ${
-        "" //<p class="data-source-hint">Demo data is fixed. Random data is regenerated each time (same schema).</p>
-    }  
   `;
 
   preset_test_info.forEach((test, idx) => {
@@ -248,9 +430,23 @@ function setupDataControls() {
   // });
 }
 
+function setupConditionBadge() {
+  const badge = document.getElementById("condition-badge");
+  if (!badge) return;
+  const labels = {
+    control: "Control",
+    inspectable: "Inspectable",
+    contestable: "Contestable",
+  };
+  const label = labels[condition] || "Control";
+  badge.textContent = label;
+  badge.dataset.variant = condition;
+}
+
 // render initially with loadDemoData
 async function init() {
   // const data = await loadDemoData();
+  setupConditionBadge();
   setupDataControls();
   await goToTestNumber(0)
 }
