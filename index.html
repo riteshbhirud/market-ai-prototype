@@ -17,14 +17,12 @@
     <h1>Collectible Marketplace Signals</h1>
     <p class="tagline">Interpretation support, not recommendation — make sense of incomplete data and stay in the loop.</p>
   </header>
-  
+
   <div class="main-layout">
-    <!-- LEFT: your app -->
-    <div class="app-content">
+    <div class="left-panel">
       <div id="data-controls"></div>
       <div id="warning"></div>
       <div id="chart"></div>
-      <div id="legend"></div>
 
       <div id="table-toggle-section">
         <button id="toggle-table" class="toggle_button" type="button">
@@ -32,20 +30,10 @@
         </button>
       </div>
       <div id="raw-table" class="hidden"></div>
-
-      <div id="interpretation"></div>
     </div>
 
-    <!-- RIGHT: Google Form -->
-    <div class="form-panel">
-      <iframe
-        src="https://docs.google.com/forms/d/e/1FAIpQLSf4acLXtZ0YY1tj8Mz0BaamU-7PX6EO9hCpyoNRfa1FMGohow/viewform?embedded=true"
-        frameborder="0"
-        marginheight="0"
-        marginwidth="0"
-      >
-        Loading…
-      </iframe>
+    <div class="right-panel">
+      <div id="interpretation"></div>
     </div>
   </div>
 

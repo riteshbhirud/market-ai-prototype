@@ -29,95 +29,71 @@ body {
   color: var(--text);
   background: var(--bg);
   margin: 0;
-  padding: 32px 40px 48px;
-  /* max-width: 960px; */
+  padding: 24px 32px 40px;
+  max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Google Form Dual Layout  */
+/* Two-column layout: chart/controls left, AI interpretation right */
 .main-layout {
   display: flex;
   gap: 20px;
   align-items: flex-start;
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-/* Left side (your app) */
-.app-content {
+.left-panel {
+  flex: 3;
+  min-width: 0;
+}
+
+.right-panel {
   flex: 2;
-  min-width: 0; /* prevents overflow issues */
-}
-
-.form-panel {
-  flex: 1.3;
-  min-width: 380px;
-  max-width: 520px;
+  min-width: 0;
   position: sticky;
   top: 20px;
-  height: calc(100vh - 40px);
-
-  background: #f5f3ff;
-  border: 1px solid #ddd6fe;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.15);
-
-  display: flex;          
-  flex-direction: column;
-  overflow: hidden;       
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
-.form-panel iframe {
-  flex: 1;              
-  width: 100%;
-  border: none;        
-}
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .main-layout {
     flex-direction: column;
-    gap: 16px;
-    padding: 0;
   }
-
-  .form-panel {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-
-    height: 95vh;        /* 👈 bigger than before */
-    min-height: 720px;   /* 👈 ensures it's never tiny */
-
+  .right-panel {
     position: static;
-  }
-
-  .form-panel iframe {
-    height: 100%;
+    max-height: none;
   }
 }
 
 /* --- Header --- */
 .page-header {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .page-header h1 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   color: var(--text);
 }
 
 .tagline {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
-/* --- Data controls --- */
+/* --- Data controls (compact horizontal row) --- */
 #data-controls {
-  margin-bottom: 20px;
-  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -126,21 +102,22 @@ body {
 
 .data-source-label {
   font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 10px;
+  font-size: 0.8rem;
+  margin: 0;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .data-source-buttons {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .data-source-buttons button {
-  padding: 8px 16px;
+  padding: 5px 12px;
   font-family: var(--font-sans);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: var(--text);
   background: var(--bg);
@@ -188,8 +165,8 @@ body {
 
 /* --- Chart --- */
 #chart {
-  margin-bottom: 24px;
-  padding: 20px;
+  margin-bottom: 16px;
+  padding: 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -198,6 +175,62 @@ body {
 
 #chart svg {
   display: block;
+  width: 100%;
+  height: auto;
+}
+
+#chart h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text);
+}
+
+.chart-legend-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  padding: 8px 10px;
+  margin: 6px 0 10px 0;
+  background: #fafaf9;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text);
+}
+
+.chart-legend-section {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.chart-legend-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.chart-legend-swatch {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.chart-legend-label {
+  line-height: 1;
 }
 
 #chart .tick text {
@@ -250,51 +283,6 @@ body {
   font-size: 11px;
   fill: var(--text-muted);
   font-family: var(--font-sans);
-}
-
-/* --- Legend --- */
-#legend {
-  margin-bottom: 24px;
-  padding: 16px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.legend-block {
-  margin-bottom: 14px;
-}
-
-.legend-block:last-child {
-  margin-bottom: 0;
-}
-
-.legend-block > div:first-child {
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 18px;
-  margin-bottom: 4px;
-  font-size: 0.875rem;
-}
-
-.legend-symbol {
-  width: 14px;
-  height: 14px;
-  margin-right: 8px;
-  display: inline-block;
-  vertical-align: middle;
-  box-sizing: border-box;
-  border-radius: 2px;
 }
 
 /* --- Table toggle --- */
@@ -396,8 +384,8 @@ body {
 }
 
 #interpretation {
-  margin-top: 8px;
-  padding: 24px 28px;
+  margin-top: 0;
+  padding: 20px 22px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -495,7 +483,6 @@ body {
 
 #userInterpretation {
   width: 100%;
-  max-width: 560px;
   padding: 12px 14px;
   font-family: var(--font-sans);
   font-size: 0.9rem;

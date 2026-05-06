@@ -1,5 +1,4 @@
 import { drawChart } from "./chart.js";
-import { drawLegend } from "./legend.js";
 import { loadAI } from "./ai_panel.js";
 import { getInterpretation } from "./api.js";
 import { generateMarketData } from "./dataGenerator.js";
@@ -69,7 +68,6 @@ async function render(data, item_name, test_idx, usePresetInterpretation = false
   currentName = item_name
 
   drawChart(currentData, currentName, currentTestIdx, currentAiGraphData, { showAI }); // draws chart with d3
-  drawLegend(currentData); // sets up legend depending on the data's present marks
   setupRawTable(currentData); // sets up the table below the graph for raw data
   checkSparsity(currentData); 
 
@@ -247,5 +245,15 @@ async function init() {
   setupDataControls();
   await goToTestNumber(0)
 }
+
+// Re-render chart on viewport resize so width tracks the left panel.
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  if (!currentData || !currentData.length) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    drawChart(currentData, currentName, currentTestIdx, currentAiGraphData, { showAI });
+  }, 120);
+});
 
 init();
