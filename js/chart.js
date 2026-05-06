@@ -1,10 +1,15 @@
-import { CONDITION_COLORS, getPlatformColors } from "./legend.js";
+import {
+  CONDITION_COLORS,
+  getPlatformColors,
+  getPlatformDashes,
+  drawChartLegend,
+} from "./legend.js";
 
 let aiVisible = true; // persists across renders
 
 function symbolType(type) {
   if (type === "sale") return d3.symbolCircle;
-  if (type === "unsold") return d3.symbolCircle;
+  if (type === "unsold") return d3.symbolPlus;
   if (type === "auction") return d3.symbolTriangle;
   if (type === "obo") return d3.symbolDiamond;
   return d3.symbolCircle;
@@ -13,11 +18,21 @@ function symbolType(type) {
 export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) {
   const { showAI = false } = options;
 
-  const containerEl = document.getElementById("chart");   // 👈 define it
-  const containerWidth = containerEl.clientWidth || 800;  // fallback
+  const containerEl = document.getElementById("chart");
+  // Measure the panel that wraps the chart so we use its real available width.
+  const panelEl = containerEl.closest(".left-panel") || containerEl.parentElement || containerEl;
+  const panelStyle = window.getComputedStyle(panelEl);
+  const panelInner =
+    panelEl.clientWidth -
+    parseFloat(panelStyle.paddingLeft || 0) -
+    parseFloat(panelStyle.paddingRight || 0);
+  const containerStyle = window.getComputedStyle(containerEl);
+  const chartHorizontalPadding =
+    parseFloat(containerStyle.paddingLeft || 0) + parseFloat(containerStyle.paddingRight || 0);
+  const available = Math.max((panelInner || containerEl.clientWidth || 800) - chartHorizontalPadding, 0);
 
-  const MIN_WIDTH = 700;
-  const width = Math.max(containerWidth, MIN_WIDTH);
+  const MIN_WIDTH = 600;
+  const width = Math.max(available || 800, MIN_WIDTH);
   const height = window.innerWidth < 900 ? 480 : 420;
 
   const aiUnlocked = showAI;
@@ -83,13 +98,24 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
     .style("height", "auto");
 
     const xLatest = d3.max(data, (d) => new Date(d.date));
-    const xPadded = new Date(xLatest);
-    xPadded.setMonth(xPadded.getMonth() + 3);
+    const xEarliest = d3.min(data, (d) => new Date(d.date));
+
+    // Reserve a fixed pixel gutter to the right of xLatest so the forecast band
+    // has consistent width across charts regardless of date span.
+    const RIGHT_GUTTER_PX = 110;
+    const leftEdgePx = 70;
+    const rightEdgePx = width - 40;
+    const dataEndPx = rightEdgePx - RIGHT_GUTTER_PX;
+    const dataSpanMs = xLatest - xEarliest || 1;
+    // Extend the domain past xLatest so xLatest maps to dataEndPx, and the
+    // domain end maps to rightEdgePx — keeping the gutter at exactly RIGHT_GUTTER_PX.
+    const pxPerMs = (dataEndPx - leftEdgePx) / dataSpanMs;
+    const xPadded = new Date(xLatest.getTime() + RIGHT_GUTTER_PX / pxPerMs);
 
     const x = d3
       .scaleTime()
-      .domain([d3.min(data, (d) => new Date(d.date)), xPadded])
-      .range([70, width - 40]);
+      .domain([xEarliest, xPadded])
+      .range([leftEdgePx, rightEdgePx]);
 
   const yMin = d3.min(data, (d) => d.price) - 20;
   const yMax = d3.max(data, (d) => d.price) + 20;
@@ -116,6 +142,7 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
 
   const platforms = [...new Set(data.map((d) => d.platform))];
   const platformColors = getPlatformColors(platforms);
+  const platformDashes = getPlatformDashes(platforms);
 
   /// Grey BG
   svg
@@ -131,17 +158,18 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
 
   // ---------------- DRAW AI OR MEDIAN ----------------
   if (aiUnlocked && aiVisible) {
-    const latestDate = d3.max(data, d => new Date(d.date));
-    const oneMonthAfter = new Date(latestDate);
-    oneMonthAfter.setMonth(oneMonthAfter.getMonth() + 3);
+    // Use a fixed pixel width for the forecast band so its size is consistent
+    // across charts regardless of the date span on the x-axis. Anchored to
+    // the latest listing so it sits in the chart's "future" gutter.
+    const FORECAST_BAND_PX = 80;
+    const xLatestPx = x(xLatest);
+    const xBandStartPx = xLatestPx;
+    const xBandEndPx = xLatestPx + FORECAST_BAND_PX;
 
     Object.entries(ai_metrics).forEach(([cond, range]) => {
-      console.log("entry:"+ JSON.stringify([range, cond]))
-      console.log("range:"+ JSON.stringify(range))
-      console.log("cond:"+ JSON.stringify(cond))
-      drawAIBounds(svg, x, y, width, cond, range,latestDate, oneMonthAfter);
+      drawAIBounds(svg, x, y, width, cond, range, xBandStartPx, xBandEndPx);
     });
-  } 
+  }
   drawMedianLine(svg, data, x, y, width);
   
   drawCursorLine(svg, data, x, y, width, height);
@@ -216,22 +244,35 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
   // }
 
   // ---------------- DATA POINTS ----------------
-  svg
-    .selectAll("path.point")
+  // White halo behind every point so overlapping marks stay legible.
+  const pointGroups = svg
+    .selectAll("g.point-group")
     .data(data)
     .enter()
-    .append("path")
-    .attr("class", "point")
+    .append("g")
+    .attr("class", "point-group")
     .attr(
       "transform",
       (d) => `translate(${x(new Date(d.date))},${y(d.price)})`
-    )
-    .attr("d", (d) =>
-      d3.symbol().type(symbolType(d.listing_type)).size(120)()
-    )
-    .attr("fill", (d) => colorScale(d.condition))
+    );
+
+  pointGroups
+    .append("path")
+    .attr("class", "point-halo")
+    .attr("d", (d) => d3.symbol().type(symbolType(d.listing_type)).size(200)())
+    .attr("fill", (d) => (d.listing_type === "unsold" ? "none" : "#fff"))
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 6)
+    .attr("pointer-events", "none");
+
+  pointGroups
+    .append("path")
+    .attr("class", "point")
+    .attr("d", (d) => d3.symbol().type(symbolType(d.listing_type)).size(200)())
+    .attr("fill", (d) => (d.listing_type === "unsold" ? "none" : colorScale(d.condition)))
     .attr("stroke", (d) => platformColors[d.platform] ?? "#333")
-    .attr("stroke-width", 2)
+    .attr("stroke-width", (d) => (d.listing_type === "unsold" ? 4 : 3))
+    .attr("stroke-dasharray", (d) => platformDashes[d.platform] || null)
     .on("mouseover", (event, d) => {
       d3.selectAll(".chart-range-rect") // highlight the corresponding range
         .transition()
@@ -273,24 +314,12 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
       tooltip.style("opacity", 0);
     });
 
-  // ---------------- UNSOLD MARK ----------------
-  svg.selectAll("path.unsold-x")
-    .data(data.filter(d => d.listing_type === "unsold"))
-    .enter()
-    .append("path")
-    .attr("class", "unsold-x")
-    .attr(
-      "transform",
-      (d) => `translate(${x(new Date(d.date))},${y(d.price)})`
-    )
-    .attr("d", d3.symbol().type(d3.symbolPlus).size(75))
-    .attr("stroke", (d) => platformColors[d.platform])
-    .attr("stroke-width", 1.5)
-    .attr("pointer-events", "none");
-
   // ---------------- LAYER FIX ----------------
   svg.selectAll(".chart-uncertainty-label-bg").raise();
   svg.selectAll(".chart-uncertainty-label").raise();
+
+  // ---------------- LEGEND STRIP ABOVE PLOT ----------------
+  drawChartLegend(containerEl, data);
 }
 
 function drawUncertainty(svg, data, y, width, height) {
@@ -428,12 +457,9 @@ function drawMedianLine(svg, data, x, y, width) {
     .attr("opacity", 0.6);
 }
 
-function drawAIBounds(svg, x, y, width, cond, range, earlyDate, laterDate) {
-  const xStart = x(earlyDate);  // 👈 LEFT side (1 month before)
-  const xEnd = x(laterDate);      // 👈 RIGHT side (latest point)
-
-  console.log("range" + range)
-  console.log("cond" + cond)
+function drawAIBounds(svg, x, y, width, cond, range, xStartPx, xEndPx) {
+  const xStart = xStartPx;
+  const xEnd = xEndPx;
 
   const unconverted_high_range = range[1]
   const unconverted_low_range = range[0]
