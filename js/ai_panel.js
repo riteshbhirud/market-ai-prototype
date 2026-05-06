@@ -104,31 +104,38 @@ export function loadAI(condition, interpretation, unlockAICallback) {
         <div class="contestable-actions">
           <button type="button" id="submit-user">Submit my interpretation</button>
         </div>
-        <div id="contestable-ai-block" class="hidden">
+
+        <div>
           <hr>
-          ${aiHeader.replace("AI Interpretation", "Generated interpretation")}
-          <div class="contestable-ai-toolbar">
-            <button type="button" id="toggle-ai">Hide system interpretation</button>
-            <button type="button" id="alternative-btn">Request alternative explanation</button>
-            <a href="#" id="raw-data-link">View raw data table</a>
+          ${aiHeader}
+          <div id="ai-block-hidden-message">
+            <p>Currently hidden until interpretation is submitted</p>
           </div>
-          <div id="contestable-ai-content">
-            ${planHtml}
-            ${reasoningHtml}
-            <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
-            <section class="interpretation-section collapsible">
-              <h4 class="collapse-toggle">${sectionIcon("Assumptions")}<span class="section-label">Assumptions</span>${infoIcon("Assumptions")} <span class="collapse-icon">▼</span></h4>
-              <ul class="collapse-content hidden"><li>${interpretation.assumptions.join("</li><li>")}</li></ul>
-            </section>
-            <section class="interpretation-section collapsible">
-              <h4 class="collapse-toggle">${sectionIcon("Limitations")}<span class="section-label">Limitations</span>${infoIcon("Limitations")} <span class="collapse-icon">▼</span></h4>
-              <ul class="collapse-content hidden"><li>${interpretation.limitations.join("</li><li>")}</li></ul>
-            </section>
-            <section class="interpretation-section">
-              <h4>${sectionIcon("Evidence")}<span class="section-label">Evidence</span>${infoIcon("Evidence")}</h4>
-              <ul>${interpretation.evidence.map((e) => `<li>${e}</li>`).join("")}</ul>
-            </section>
-            <p id="alternative-text" class="alternative-explanation">${alts[0]}</p>
+          <div id="contestable-ai-block" class="hidden">
+            <hr>
+            <div class="contestable-ai-toolbar">
+              <button type="button" id="toggle-ai">Hide system interpretation</button>
+              <button type="button" id="alternative-btn">Request alternative explanation</button>
+              <a href="#" id="raw-data-link">View raw data table</a>
+            </div>
+            <div id="contestable-ai-content">
+              <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
+              ${planHtml}
+              ${reasoningHtml}
+              <section class="interpretation-section collapsible">
+                <h4 class="collapse-toggle">${sectionIcon("Assumptions")}<span class="section-label">Assumptions</span>${infoIcon("Assumptions")} <span class="collapse-icon">▼</span></h4>
+                <ul class="collapse-content hidden"><li>${interpretation.assumptions.join("</li><li>")}</li></ul>
+              </section>
+              <section class="interpretation-section collapsible">
+                <h4 class="collapse-toggle">${sectionIcon("Limitations")}<span class="section-label">Limitations</span>${infoIcon("Limitations")} <span class="collapse-icon">▼</span></h4>
+                <ul class="collapse-content hidden"><li>${interpretation.limitations.join("</li><li>")}</li></ul>
+              </section>
+              <section class="interpretation-section">
+                <h4>${sectionIcon("Evidence")}<span class="section-label">Evidence</span>${infoIcon("Evidence")}</h4>
+                <ul>${interpretation.evidence.map((e) => `<li>${e}</li>`).join("")}</ul>
+              </section>
+              <p id="alternative-text" class="alternative-explanation">${alts[0]}</p>
+            </div>
           </div>
         </div>
       `;
@@ -136,6 +143,7 @@ export function loadAI(condition, interpretation, unlockAICallback) {
 
       const submitBtn = document.getElementById("submit-user");
       const textarea = document.getElementById("userInterpretation");
+      const hiddenMessage = document.getElementById("ai-block-hidden-message");
       const aiBlock = document.getElementById("contestable-ai-block");
       const toggleBtn = document.getElementById("toggle-ai");
       const altBtn = document.getElementById("alternative-btn");
@@ -153,6 +161,7 @@ export function loadAI(condition, interpretation, unlockAICallback) {
         submitBtn.setAttribute("aria-invalid", "false");
         panel.querySelector(".contestable-actions").innerHTML = '<span class="user-done">Recorded. You can reveal the system interpretation below. You can reveal the AI estimate on the graph above.</span>';
         aiBlock.classList.remove("hidden");
+        hiddenMessage.classList.add("hidden");
         aiVisible = true;
         toggleBtn.textContent = "Hide system interpretation";
       });
