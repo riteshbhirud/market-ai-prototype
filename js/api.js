@@ -13,7 +13,9 @@ import {
 
 const INFERENCE_API = globalThis?.INFERENCE_API_URL || "http://localhost:5000";
 // External FastAPI interpretation-engine service (preferred when configured).
-const INTERPRETATION_ENGINE_API = globalThis?.INTERPRETATION_ENGINE_API_URL || "";
+function getInterpretationEngineApi() {
+  return globalThis?.INTERPRETATION_ENGINE_API_URL || "";
+}
 
 const SCHEMA_VERSION = INTERPRETATION_SCHEMA_VERSION;
 
@@ -194,7 +196,8 @@ function buildListingsSnippet(data, { maxRows = 25, descMax = 120 } = {}) {
 }
 
 async function fetchInterpretation_FastApi(data) {
-  if (!INTERPRETATION_ENGINE_API) throw new Error("FastAPI not configured");
+  const fastApiUrl = getInterpretationEngineApi();
+  if (!fastApiUrl) throw new Error("FastAPI not configured");
   if (circuitIsOpen()) throw new Error("FastAPI circuit open");
 
   const market_summary = compactMarketSummary(data);
@@ -210,8 +213,55 @@ async function fetchInterpretation_FastApi(data) {
     listings_snippet,
   };
 
-  const base = INTERPRETATION_ENGINE_API.replace(/\/+$/, "");
+  const base = fastApiUrl.replace(/\/+$/, "");
   const endpoint = base.endsWith("/interpret-engine") ? base : `${base}/interpret`;
+
+  const { ok, status, json, error } = await retryingPostJson(endpoint, payload, {
+    timeoutMs: DEFAULT_FASTAPI_TIMEOUT_MS,
+    attempts: 3,
+  });
+
+  if (!ok) {
+    circuitRecordFailure();
+    const msg =
+      (json && json.error) ||
+      (error && error.name === "AbortError" ? `Timeout after ${DEFAULT_FASTAPI_TIMEOUT_MS}ms calling ${endpoint}` : null) ||
+      (error && error.message ? `Network/CORS error calling ${endpoint}: ${error.message}` : null) ||
+      `HTTP ${status}`;
+    throw new Error(msg);
+  }
+
+  circuitRecordSuccess();
+  return json || {};
+}
+
+export async function fetchContestResponse(data, aiInterpretation, userInterpretation, { correlationId, clientCapabilities } = {}) {
+  const fastApiUrl = getInterpretationEngineApi();
+  if (!fastApiUrl) throw new Error("FastAPI not configured");
+  if (circuitIsOpen()) throw new Error("FastAPI circuit open");
+  if (!aiInterpretation || typeof userInterpretation !== "string" || !userInterpretation.trim()) {
+    throw new Error("Missing AI interpretation or user interpretation");
+  }
+
+  const market_summary = compactMarketSummary(data);
+  const listings_snippet = buildListingsSnippet(data);
+  const payload = {
+    schema_version: SCHEMA_VERSION,
+    correlation_id: correlationId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    client_capabilities:
+      clientCapabilities ||
+      {
+        max_payload_bytes_hint: 24_000,
+        allow_followup: false,
+      },
+    market_summary,
+    listings_snippet,
+    ai_interpretation: aiInterpretation,
+    user_interpretation: String(userInterpretation).trim(),
+  };
+
+  const base = fastApiUrl.replace(/\/+$/, "");
+  const endpoint = base.endsWith("/contest") ? base : `${base}/contest`;
 
   const { ok, status, json, error } = await retryingPostJson(endpoint, payload, {
     timeoutMs: DEFAULT_FASTAPI_TIMEOUT_MS,
@@ -247,7 +297,7 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
 
       let saleCount =  (data.length) - (data.filter((d) => d.listing_type === "unsold").length);
       let totalCount = data.length;
-      const summary = `Our AI Model estimates that the current market value (past three months) is : ${formattedRanges}. This is based on ${totalCount} records (${saleCount} confirmed sale${saleCount > 1 ? "s" : ""}).`;      
+      const summary = `Our AI Model estimates that the current market value is : ${formattedRanges}. This is based on ${totalCount} records (${saleCount} confirmed sale${saleCount > 1 ? "s" : ""}).`;      
       return normalizeInterpretation(
         {
           ...norm,
@@ -263,7 +313,7 @@ export async function getInterpretation(data, usePresetInterpretation, presetInt
     }
   } else {
     const providerOrder = [
-      { name: "fastapi", enabled: !!INTERPRETATION_ENGINE_API, fn: fetchInterpretation_FastApi },
+      { name: "fastapi", enabled: !!getInterpretationEngineApi(), fn: fetchInterpretation_FastApi },
       { name: "ollama", enabled: !!INFERENCE_API, fn: fetchInterpretation_Ollama },
       { name: "rule", enabled: true, fn: async (d) => interpretRuleBased(d) },
     ];

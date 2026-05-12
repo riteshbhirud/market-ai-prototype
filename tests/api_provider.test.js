@@ -2,7 +2,7 @@
  * Unit tests for js/api.js provider pipeline helpers.
  * Focus: payload shaping bounds, normalization, and cache/fallback behaviors.
  */
-import { getInterpretation, __test } from "../js/api.js";
+import { getInterpretation, fetchContestResponse, __test } from "../js/api.js";
 import { compactMarketSummary, normalizeInterpretation } from "../js/interpretation/engine.js";
 
 function assert(condition, message) {
@@ -97,6 +97,70 @@ const fixture = [
   const out2 = await getInterpretation(fixture, false, "");
   assert(out2.summary === "ok", "second call returns same");
   assert(fetchCalls === 1, "second call hits cache (no extra fetch)");
+}
+
+// --- contest endpoint payload shaping ---
+{
+  globalThis.INTERPRETATION_ENGINE_API_URL = "https://fastapi.test";
+  let fetchCalls = 0;
+  globalThis.fetch = async (url, opts) => {
+    fetchCalls += 1;
+    assert(url === "https://fastapi.test/contest", "contest endpoint selected");
+    const body = JSON.parse(opts.body || "{}");
+    assert(body.schema_version === 1, "schema_version passed");
+    assert(body.user_interpretation === "I think the market is higher.", "user interpretation passed");
+    assert(body.ai_interpretation && body.ai_interpretation.summary === "ok", "ai interpretation passed");
+    return {
+      ok: true,
+      status: 200,
+      async text() {
+        return JSON.stringify({
+          ai_response: "I see your point.",
+          interpretation_changed: true,
+          updated_interpretation: {
+            summary: "Revised summary",
+            evidence: [],
+            assumptions: [],
+            limitations: [],
+            alternatives: [],
+            alternative_interpretations: [],
+            plan: "",
+            reasoning_steps: [],
+            grade_chart: { NM: [100, 200] },
+            current_estimate: null,
+            current_high_range: null,
+            current_low_range: null,
+            current_trend: "steady"
+          },
+        });
+      },
+    };
+  };
+
+  const response = await fetchContestResponse(
+    fixture,
+    { 
+      summary: "ok", 
+      evidence: [], 
+      assumptions: [], 
+      limitations: [], 
+      alternatives: [], 
+      alternative_interpretations: [],
+      plan: "", 
+      reasoning_steps: [],
+      grade_chart: { NM: [100, 200] },
+      current_estimate: null,
+      current_high_range: null,
+      current_low_range: null,
+      current_trend: "steady"
+    },
+    "I think the market is higher."
+  );
+
+  assert(response.ai_response === "I see your point.", "contest response returned");
+  assert(response.interpretation_changed === true, "contest changed true");
+  assert(response.updated_interpretation.summary === "Revised summary", "updated interpretation returned");
+  assert(fetchCalls === 1, "contest request uses network once");
 }
 
 console.log("All api provider tests passed.");

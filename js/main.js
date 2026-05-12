@@ -95,7 +95,7 @@ async function render(data, item_name, test_idx, usePresetInterpretation = false
   currentAiGraphData = currentInterpretation?.grade_chart
 
   drawChart(currentData, currentName, currentTestIdx, currentAiGraphData, { showAI }); // re-render with AI prediction
-  loadAI(condition, currentInterpretation, unlockAICallback);
+  loadAI(condition, currentInterpretation, currentData, unlockAICallback);
 }
 
 function unlockAICallback(){
