@@ -18,7 +18,7 @@ const INTERPRETATION_ENGINE_API = globalThis?.INTERPRETATION_ENGINE_API_URL || "
 const SCHEMA_VERSION = INTERPRETATION_SCHEMA_VERSION;
 
 const DEFAULT_TIMEOUT_MS = 45_000;
-const DEFAULT_FASTAPI_TIMEOUT_MS = 75_000;
+const DEFAULT_FASTAPI_TIMEOUT_MS = 120_000;
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h
 const CACHE_PREFIX = "market-ai:interpretation:";
@@ -99,6 +99,8 @@ async function fetchJsonWithTimeout(url, { method = "GET", headers, body, timeou
       method,
       headers,
       body,
+      mode: "cors",
+      credentials: "omit",
       signal: controller.signal,
     });
     const text = await res.text();
@@ -130,15 +132,14 @@ async function retryingPostJson(url, payload, { timeoutMs, attempts = 3 } = {}) 
       return { ok: false, status: 0, json: null };
     });
 
-    if (ok) return { ok: true, status, json };
-    if (!isRetryableStatus(status)) return { ok: false, status, json };
+    if (ok) return { ok: true, status, json, error: null };
+    if (!isRetryableStatus(status)) return { ok: false, status, json, error: lastErr };
 
     // exponential backoff with jitter
     const backoff = Math.min(2000 * 2 ** i, 8000) + Math.floor(Math.random() * 250);
     await sleepMs(backoff);
   }
-  if (lastErr) throw lastErr;
-  return { ok: false, status: 0, json: null };
+  return { ok: false, status: 0, json: null, error: lastErr };
 }
 
 async function fetchInterpretation_Ollama(data) {
@@ -212,14 +213,18 @@ async function fetchInterpretation_FastApi(data) {
   const base = INTERPRETATION_ENGINE_API.replace(/\/+$/, "");
   const endpoint = base.endsWith("/interpret-engine") ? base : `${base}/interpret`;
 
-  const { ok, status, json } = await retryingPostJson(endpoint, payload, {
+  const { ok, status, json, error } = await retryingPostJson(endpoint, payload, {
     timeoutMs: DEFAULT_FASTAPI_TIMEOUT_MS,
     attempts: 3,
   });
 
   if (!ok) {
     circuitRecordFailure();
-    const msg = (json && json.error) || `HTTP ${status}`;
+    const msg =
+      (json && json.error) ||
+      (error && error.name === "AbortError" ? `Timeout after ${DEFAULT_FASTAPI_TIMEOUT_MS}ms calling ${endpoint}` : null) ||
+      (error && error.message ? `Network/CORS error calling ${endpoint}: ${error.message}` : null) ||
+      `HTTP ${status}`;
     throw new Error(msg);
   }
 
@@ -230,7 +235,7 @@ async function fetchInterpretation_FastApi(data) {
 /** Get interpretation: LLM if API available, else rule-based. Same shape as interpret(). */
 // if test_data use preset
 export async function getInterpretation(data, usePresetInterpretation, presetInterpretationFileName) {
-  if (usePresetInterpretation) { // use a preset-interpretation
+  if (usePresetInterpretation && presetInterpretationFileName && presetInterpretationFileName !== "none") { // use a preset-interpretation
     try {
       const interpretation = await fetch("data/preset_interpretations/" + presetInterpretationFileName).then((r) => r.json());
       const norm = normalizeInterpretation(interpretation, data);
