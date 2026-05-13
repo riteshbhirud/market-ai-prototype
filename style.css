@@ -470,7 +470,9 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-#chart svg {
+/* Only the main chart SVG (a direct child of #chart) should fill the width.
+   Legend swatch SVGs live deeper inside and must keep their explicit size. */
+#chart > svg {
   display: block;
   width: 100%;
   height: auto;
@@ -522,8 +524,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 16px;
-  padding: 7px 10px;
+  gap: 6px 14px;
+  padding: 8px 10px;
   margin: 4px 0 10px 0;
   background: var(--surface-soft);
   border: 1px solid var(--border);
@@ -533,11 +535,48 @@ body {
   color: var(--text);
 }
 
+/* Reading guide (decoder strip) */
+.chart-legend-guide {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 5px 8px 5px 10px;
+  background: var(--accent-softer);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  cursor: help;
+}
+
+.chart-legend-guide .guide-eyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-right: 2px;
+}
+
+.chart-legend-guide .guide-rule {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.chart-legend-guide .guide-key {
+  font-weight: 700;
+  color: var(--text);
+}
+
 .chart-legend-section {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 3px 8px;
+  gap: 3px 6px;
+  padding: 0;
 }
 
 .chart-legend-title {
@@ -552,29 +591,132 @@ body {
   gap: 3px;
 }
 
+/* Each chip is a button now (interactive filter) */
 .chart-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   white-space: nowrap;
-  cursor: help;
+  cursor: pointer;
   position: relative;
-  padding: 1px 4px;
-  border-radius: 4px;
-  transition: background 0.12s;
+  padding: 3px 7px 3px 5px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text);
+  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
+  line-height: 1;
 }
 
-.chart-legend-item:hover {
-  background: rgba(79, 70, 229, 0.06);
+.chart-legend-item:hover,
+.chart-legend-item.previewed {
+  background: var(--surface);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.chart-legend-item:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.chart-legend-item.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px var(--accent-glow);
+}
+
+.chart-legend-item.active .chart-legend-label {
+  color: #fff;
+}
+
+.chart-legend-item:active {
+  transform: translateY(1px);
 }
 
 .chart-legend-swatch {
   display: inline-block;
   vertical-align: middle;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
 }
 
 .chart-legend-label {
   line-height: 1;
+}
+
+/* Status pill at the end of the legend bar */
+.chart-legend-status {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  margin-left: auto;
+  background: var(--surface);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  box-shadow: var(--shadow-xs);
+  animation: fadeIn 0.18s ease;
+}
+
+.chart-legend-status.active {
+  display: inline-flex;
+}
+
+.chart-legend-status .legend-status-count strong {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.chart-legend-status .legend-status-sep {
+  color: var(--text-soft);
+}
+
+.chart-legend-status .legend-status-filter {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.legend-status-reset {
+  padding: 2px 8px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legend-status-reset:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Smooth fade for chart points when filter changes */
+#chart .point-group {
+  transition: opacity 0.22s ease;
 }
 
 #chart .tick text {

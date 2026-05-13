@@ -95,12 +95,77 @@ function getColor(cond) {
   return CONDITION_COLORS[cond] || "gray";
 }
 
+// --- Interactive filter state ---------------------------------------------
+// Click a chip to lock a filter (one selection per channel). Hover preview
+// temporarily replaces the corresponding channel until the cursor leaves.
+const clickedFilter = { type: null, condition: null, platform: null };
+const hoverFilter = { type: null, condition: null, platform: null };
+
+let lastDataSnapshot = [];
+
+function effectiveFilter() {
+  return {
+    type: hoverFilter.type ?? clickedFilter.type,
+    condition: hoverFilter.condition ?? clickedFilter.condition,
+    platform: hoverFilter.platform ?? clickedFilter.platform,
+  };
+}
+
+function pointMatches(d, filter) {
+  if (filter.type && d.listing_type !== filter.type) return false;
+  if (filter.condition && d.condition !== filter.condition) return false;
+  if (filter.platform && d.platform !== filter.platform) return false;
+  return true;
+}
+
+function applyChartFilter() {
+  if (typeof d3 === "undefined") return;
+  const filter = effectiveFilter();
+  const anyActive = filter.type || filter.condition || filter.platform;
+
+  d3.selectAll(".point-group").each(function (d) {
+    const node = d3.select(this);
+    if (!anyActive) {
+      node.style("opacity", 1);
+      return;
+    }
+    node.style("opacity", pointMatches(d, filter) ? 1 : 0.1);
+  });
+
+  // Dim AI range bands and median line too when filtering by condition.
+  d3.selectAll(".chart-range-rect").each(function () {
+    const cond = this.getAttribute("data-cond");
+    if (!filter.condition) {
+      d3.select(this).style("opacity", 1);
+    } else {
+      d3.select(this).style("opacity", cond === filter.condition ? 1 : 0.15);
+    }
+  });
+}
+
+export function resetChartFilters() {
+  clickedFilter.type = null;
+  clickedFilter.condition = null;
+  clickedFilter.platform = null;
+  hoverFilter.type = null;
+  hoverFilter.condition = null;
+  hoverFilter.platform = null;
+  applyChartFilter();
+  // Re-render legend chip states if a chart is already on screen.
+  const container = document.getElementById("chart");
+  if (container && lastDataSnapshot.length) {
+    drawChartLegend(container, lastDataSnapshot);
+  }
+}
+
 // Renders a compact HTML legend strip at the top of the chart container so
 // the plot area itself is fully unobstructed. Rebuilt on every chart render.
 export function drawChartLegend(container, data) {
   const node = typeof container.node === "function" ? container.node() : container;
   const existing = node.querySelector(".chart-legend-bar");
   if (existing) existing.remove();
+
+  lastDataSnapshot = data;
 
   const listingTypes = [...new Set(data.map((d) => d.listing_type))];
   const conditions = [...new Set(data.map((d) => d.condition))];
@@ -110,9 +175,10 @@ export function drawChartLegend(container, data) {
   const bar = document.createElement("div");
   bar.className = "chart-legend-bar";
 
-  function makeSection(title, items, renderSwatch, descLookup) {
+  function makeSection(channel, title, items, renderSwatch, descLookup) {
     const sec = document.createElement("div");
     sec.className = "chart-legend-section";
+    sec.dataset.channel = channel;
 
     const t = document.createElement("span");
     t.className = "chart-legend-title";
@@ -128,21 +194,72 @@ export function drawChartLegend(container, data) {
     sec.appendChild(t);
 
     items.forEach((key) => {
-      const row = document.createElement("span");
+      const row = document.createElement("button");
+      row.type = "button";
       row.className = "chart-legend-item";
+      row.dataset.channel = channel;
+      row.dataset.key = key;
       const tip = descLookup ? descLookup(key) : null;
       if (tip) {
         row.setAttribute("data-tooltip", tip);
-        row.setAttribute("tabindex", "0");
       }
+
+      const isActive = clickedFilter[channel] === key;
+      if (isActive) row.classList.add("active");
+
       row.appendChild(renderSwatch(key));
       const lbl = document.createElement("span");
       lbl.className = "chart-legend-label";
       lbl.textContent = LISTING_TYPE_LABEL[key] || key;
       row.appendChild(lbl);
+
+      row.addEventListener("mouseenter", () => {
+        hoverFilter[channel] = key;
+        applyChartFilter();
+        updateStatusIndicator();
+        markPreviewed(channel, key, true);
+      });
+      row.addEventListener("mouseleave", () => {
+        hoverFilter[channel] = null;
+        applyChartFilter();
+        updateStatusIndicator();
+        markPreviewed(channel, key, false);
+      });
+      row.addEventListener("focus", () => {
+        hoverFilter[channel] = key;
+        applyChartFilter();
+        updateStatusIndicator();
+        markPreviewed(channel, key, true);
+      });
+      row.addEventListener("blur", () => {
+        hoverFilter[channel] = null;
+        applyChartFilter();
+        updateStatusIndicator();
+        markPreviewed(channel, key, false);
+      });
+      row.addEventListener("click", () => {
+        if (clickedFilter[channel] === key) {
+          clickedFilter[channel] = null;
+        } else {
+          clickedFilter[channel] = key;
+        }
+        // Refresh chip active states across this section.
+        sec.querySelectorAll(".chart-legend-item").forEach((el) => {
+          el.classList.toggle("active", clickedFilter[channel] === el.dataset.key);
+        });
+        applyChartFilter();
+        updateStatusIndicator();
+      });
+
       sec.appendChild(row);
     });
     return sec;
+  }
+
+  function markPreviewed(channel, key, on) {
+    bar.querySelectorAll(`.chart-legend-item[data-channel="${channel}"][data-key="${CSS.escape(key)}"]`).forEach((el) => {
+      el.classList.toggle("previewed", on);
+    });
   }
 
   function makeSvg(width, height) {
@@ -154,7 +271,19 @@ export function drawChartLegend(container, data) {
     return svgEl;
   }
 
-  const typeSection = makeSection("Listing type", listingTypes, (key) => {
+  // --- Reading guide (one composite annotated example) ---------------------
+  const guide = document.createElement("div");
+  guide.className = "chart-legend-guide";
+  guide.setAttribute("data-tooltip", "Each point on the chart combines three signals: its shape, its fill color, and its outline color. Click any chip below to filter, or hover to preview.");
+  guide.innerHTML = `
+    <span class="guide-eyebrow">Reading the chart</span>
+    <span class="guide-rule"><span class="guide-key">Shape</span>= type</span>
+    <span class="guide-rule"><span class="guide-key">Fill</span>= condition</span>
+    <span class="guide-rule"><span class="guide-key">Outline</span>= platform</span>
+  `;
+  bar.appendChild(guide);
+
+  const typeSection = makeSection("type", "Listing type", listingTypes, (key) => {
     const svgEl = makeSvg(18, 18);
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", symbolPathFor(key, key === "unsold" ? 60 : 70));
@@ -166,20 +295,29 @@ export function drawChartLegend(container, data) {
     return svgEl;
   }, (key) => LISTING_TYPE_DESC[key] || null);
 
-  const condSection = makeSection("Condition", conditions, (key) => {
+  const condSection = makeSection("condition", "Condition", conditions, (key) => {
+    // Make condition swatch resemble a real chart point: filled circle with a
+    // light gray outline (representing "any" platform) so users see the fill
+    // contributing to a real mark.
     const svgEl = makeSvg(18, 18);
+    const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    halo.setAttribute("cx", 9);
+    halo.setAttribute("cy", 9);
+    halo.setAttribute("r", 6);
+    halo.setAttribute("fill", "#fff");
+    svgEl.appendChild(halo);
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     c.setAttribute("cx", 9);
     c.setAttribute("cy", 9);
     c.setAttribute("r", 5);
     c.setAttribute("fill", getColor(key));
-    c.setAttribute("stroke", "#fff");
-    c.setAttribute("stroke-width", 1);
+    c.setAttribute("stroke", "#cbd5e1");
+    c.setAttribute("stroke-width", 1.5);
     svgEl.appendChild(c);
     return svgEl;
   }, (key) => CONDITION_FULL[key] || null);
 
-  const platSection = makeSection("Platform", platforms, (key) => {
+  const platSection = makeSection("platform", "Platform", platforms, (key) => {
     const style = platformStyles[key];
     const svgEl = makeSvg(18, 18);
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -198,6 +336,52 @@ export function drawChartLegend(container, data) {
   bar.appendChild(condSection);
   bar.appendChild(platSection);
 
+  // --- Status pill (count + reset) -----------------------------------------
+  const status = document.createElement("div");
+  status.className = "chart-legend-status";
+  bar.appendChild(status);
+
+  function updateStatusIndicator() {
+    const filter = effectiveFilter();
+    const anyActive = filter.type || filter.condition || filter.platform;
+    const anyClicked = clickedFilter.type || clickedFilter.condition || clickedFilter.platform;
+
+    if (!anyActive) {
+      status.innerHTML = "";
+      status.classList.remove("active");
+      return;
+    }
+
+    const matching = lastDataSnapshot.filter((d) => pointMatches(d, filter)).length;
+    const total = lastDataSnapshot.length;
+    const parts = [];
+    if (filter.type) parts.push(LISTING_TYPE_LABEL[filter.type] || filter.type);
+    if (filter.condition) parts.push(filter.condition);
+    if (filter.platform) parts.push(filter.platform);
+    status.classList.add("active");
+    status.innerHTML = `
+      <span class="legend-status-count"><strong>${matching}</strong> / ${total}</span>
+      <span class="legend-status-sep">·</span>
+      <span class="legend-status-filter">${parts.join(" + ")}</span>
+      ${anyClicked ? `<button type="button" class="legend-status-reset" aria-label="Clear filters">Reset</button>` : ""}
+    `;
+    const resetBtn = status.querySelector(".legend-status-reset");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        clickedFilter.type = null;
+        clickedFilter.condition = null;
+        clickedFilter.platform = null;
+        hoverFilter.type = null;
+        hoverFilter.condition = null;
+        hoverFilter.platform = null;
+        bar.querySelectorAll(".chart-legend-item").forEach((el) => el.classList.remove("active", "previewed"));
+        applyChartFilter();
+        updateStatusIndicator();
+      });
+    }
+  }
+
   // Insert just before the SVG so it sits above the plot area.
   const svgInChart = node.querySelector("svg");
   if (svgInChart) {
@@ -205,6 +389,10 @@ export function drawChartLegend(container, data) {
   } else {
     node.appendChild(bar);
   }
+
+  // After mount, paint filters & status (in case state survived a re-render).
+  applyChartFilter();
+  updateStatusIndicator();
 }
 
 export {

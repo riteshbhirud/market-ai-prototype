@@ -1,4 +1,5 @@
 import { drawChart } from "./chart.js";
+import { resetChartFilters } from "./legend.js";
 import { loadAI } from "./ai_panel.js";
 import { getInterpretation } from "./api.js";
 import { generateMarketData } from "./dataGenerator.js";
@@ -371,8 +372,9 @@ async function loadTestData(filename) {
 async function goToTestNumber(idx) {
 
   showAI = (condition=="contestable")? false : true;
+  resetChartFilters();
   const next_test = preset_test_info[(idx)%preset_test_info.length]
-  
+
   const marketplace_item = await loadTestData("test_data/"+next_test.marketplace_item_filename);
   await render(marketplace_item, next_test.name, idx, true, next_test.interpretation_filename, next_test.description || "");
   setupDataControls();

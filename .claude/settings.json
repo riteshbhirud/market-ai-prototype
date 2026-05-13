@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:8000/\")",
+      "Bash(curl -s -o /dev/null -w \"\" \"http://localhost:8000/\")",
+      "Bash(grep -lE *)",
+      "Bash(git commit *)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu --no-sandbox --user-data-dir=/tmp/cct-filt-c --disable-cache --virtual-time-budget=5000 --window-size=1440,900 --dump-dom 'http://localhost:8000/?condition=control&t=__TRACKED_VAR__')",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu --no-sandbox --user-data-dir=/tmp/cct-filt-ct2 --disable-cache --virtual-time-budget=5000 --window-size=1440,900 --dump-dom 'http://localhost:8000/?condition=contestable&t=__TRACKED_VAR__')"
+    ]
+  }
+}
