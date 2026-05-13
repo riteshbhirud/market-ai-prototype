@@ -14,7 +14,10 @@ const SECTION_TIPS = {
   "Alternative view": "A different reasonable reading of the same data — useful as a sanity check.",
 };
 
+import { fetchContestResponse } from "./api.js";
+
 const SECTION_ICONS = {
+  Summary: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
   Plan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`,
   Evidence: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
   Assumptions: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
@@ -34,7 +37,7 @@ function sectionIcon(key) {
   return `<span class="section-icon" aria-hidden="true">${svg}</span>`;
 }
 
-export function loadAI(condition, interpretation, unlockAICallback) {
+export function loadAI(condition, interpretation, data, unlockAICallback) {
   const panel = document.getElementById("interpretation");
   if (!panel || !interpretation) return;
 
@@ -59,7 +62,12 @@ export function loadAI(condition, interpretation, unlockAICallback) {
   if (condition === "control") {
     panel.innerHTML = `
       ${aiHeader}
-      <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
+      <section class="interpretation-section">
+        <h4>${sectionIcon("Summary")}<span class="section-label">Summary</span>${infoIcon("Summary")}</h4>
+        <p style="font-weight: bold;" class="interpretation-summary">${interpretation.summary}</p>
+        <p class="interpretation-summary">${interpretation.summary_details}</p>
+      </section>
+
       <p class="interpretation-note">This system supports interpretation, not recommendation. It does not tell you what to buy or what price is "correct."</p>
     `;
     return;
@@ -68,7 +76,11 @@ export function loadAI(condition, interpretation, unlockAICallback) {
   if (condition === "inspectable") {
     panel.innerHTML = `
       ${aiHeader}
-      <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
+      <section class="interpretation-section">
+        <h4>${sectionIcon("Summary")}<span class="section-label">Summary</span>${infoIcon("Summary")}</h4>
+        <p style="font-weight: bold;" class="interpretation-summary">${interpretation.summary}</p>
+        <p class="interpretation-summary">${interpretation.summary_details}</p>
+      </section>
       ${planHtml}
       ${reasoningHtml}
       <section class="interpretation-section">
@@ -104,31 +116,60 @@ export function loadAI(condition, interpretation, unlockAICallback) {
         <div class="contestable-actions">
           <button type="button" id="submit-user">Submit my interpretation</button>
         </div>
-        <div id="contestable-ai-block" class="hidden">
+
+        <div>
           <hr>
-          ${aiHeader.replace("AI Interpretation", "Generated interpretation")}
-          <div class="contestable-ai-toolbar">
-            <button type="button" id="toggle-ai">Hide system interpretation</button>
-            <button type="button" id="alternative-btn">Request alternative explanation</button>
-            <a href="#" id="raw-data-link">View raw data table</a>
+          ${aiHeader}
+          <div id="ai-block-hidden-message">
+            <p>Currently hidden until interpretation is submitted</p>
           </div>
-          <div id="contestable-ai-content">
-            ${planHtml}
-            ${reasoningHtml}
-            <p class="interpretation-summary interpretation-section">${interpretation.summary}</p>
-            <section class="interpretation-section collapsible">
-              <h4 class="collapse-toggle">${sectionIcon("Assumptions")}<span class="section-label">Assumptions</span>${infoIcon("Assumptions")} <span class="collapse-icon">▼</span></h4>
-              <ul class="collapse-content hidden"><li>${interpretation.assumptions.join("</li><li>")}</li></ul>
-            </section>
-            <section class="interpretation-section collapsible">
-              <h4 class="collapse-toggle">${sectionIcon("Limitations")}<span class="section-label">Limitations</span>${infoIcon("Limitations")} <span class="collapse-icon">▼</span></h4>
-              <ul class="collapse-content hidden"><li>${interpretation.limitations.join("</li><li>")}</li></ul>
-            </section>
-            <section class="interpretation-section">
-              <h4>${sectionIcon("Evidence")}<span class="section-label">Evidence</span>${infoIcon("Evidence")}</h4>
-              <ul>${interpretation.evidence.map((e) => `<li>${e}</li>`).join("")}</ul>
-            </section>
-            <p id="alternative-text" class="alternative-explanation">${alts[0]}</p>
+          <div id="contestable-ai-block" class="hidden">
+            <hr>
+            <div class="contestable-ai-toolbar">
+              <button type="button" id="toggle-ai">Hide system interpretation</button>
+              <button type="button" id="alternative-btn">Request alternative explanation</button>
+              <button type="button" id="challenge-ai" class="toggle_button hidden">Challenge AI with my interpretation</button>
+              <a href="#" id="raw-data-link">View raw data table</a>
+            </div>
+            <div id="contestable-ai-content">
+              <section class="interpretation-section">
+                <h4>${sectionIcon("Summary")}<span class="section-label">Summary</span>${infoIcon("Summary")}</h4>
+                <p style="font-weight: bold;" class="interpretation-summary">${interpretation.summary}</p>
+                <p class="interpretation-summary">${interpretation.summary_details}</p>
+              </section>
+
+              ${planHtml}
+              ${reasoningHtml}
+              <section class="interpretation-section collapsible">
+                <h4 class="collapse-toggle">${sectionIcon("Assumptions")}<span class="section-label">Assumptions</span>${infoIcon("Assumptions")} <span class="collapse-icon">▼</span></h4>
+                <ul class="collapse-content hidden"><li>${interpretation.assumptions.join("</li><li>")}</li></ul>
+              </section>
+              <section class="interpretation-section collapsible">
+                <h4 class="collapse-toggle">${sectionIcon("Limitations")}<span class="section-label">Limitations</span>${infoIcon("Limitations")} <span class="collapse-icon">▼</span></h4>
+                <ul class="collapse-content hidden"><li>${interpretation.limitations.join("</li><li>")}</li></ul>
+              </section>
+              <section class="interpretation-section">
+                <h4>${sectionIcon("Evidence")}<span class="section-label">Evidence</span>${infoIcon("Evidence")}</h4>
+                <ul>${interpretation.evidence.map((e) => `<li>${e}</li>`).join("")}</ul>
+              </section>
+              <section class="interpretation-section">
+                <h4>${sectionIcon("Alternative view")}<span class="section-label">Alternative view</span>${infoIcon("Alternative view")}</h4>
+                <p id="alternative-text" class="alternative-explanation">${alts[0]}</p>
+              </section>              
+            </div>
+            <div id="contestable-challenge-result" class="hidden">
+              <section class="interpretation-section">
+                <h4>AI response</h4>
+                <p id="contest-ai-response-text"></p>
+              </section>
+              <section class="interpretation-section">
+                <p id="contest-ai-result-note"></p>
+                <button type="button" id="toggle-updated-interpretation" class="toggle_button hidden">Show updated interpretation</button>
+                <div id="contest-updated-interpretation" class="hidden">
+                  <p class="interpretation-summary interpretation-section" id="contest-updated-summary-text"></p>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       `;
@@ -136,10 +177,18 @@ export function loadAI(condition, interpretation, unlockAICallback) {
 
       const submitBtn = document.getElementById("submit-user");
       const textarea = document.getElementById("userInterpretation");
+      const hiddenMessage = document.getElementById("ai-block-hidden-message");
       const aiBlock = document.getElementById("contestable-ai-block");
       const toggleBtn = document.getElementById("toggle-ai");
       const altBtn = document.getElementById("alternative-btn");
       const altText = document.getElementById("alternative-text");
+      const challengeBtn = document.getElementById("challenge-ai");
+      const contestResponse = document.getElementById("contestable-challenge-result");
+      const aiResponseText = document.getElementById("contest-ai-response-text");
+      const resultNote = document.getElementById("contest-ai-result-note");
+      const toggleUpdatedBtn = document.getElementById("toggle-updated-interpretation");
+      const updatedInterpretationSection = document.getElementById("contest-updated-interpretation");
+      const updatedInterpretationSummaryText = document.getElementById("contest-updated-summary-text");
       const rawLink = document.getElementById("raw-data-link");
 
       submitBtn.addEventListener("click", () => {
@@ -153,8 +202,54 @@ export function loadAI(condition, interpretation, unlockAICallback) {
         submitBtn.setAttribute("aria-invalid", "false");
         panel.querySelector(".contestable-actions").innerHTML = '<span class="user-done">Recorded. You can reveal the system interpretation below. You can reveal the AI estimate on the graph above.</span>';
         aiBlock.classList.remove("hidden");
+        hiddenMessage.classList.add("hidden");
+        challengeBtn.classList.remove("hidden");
         aiVisible = true;
         toggleBtn.textContent = "Hide system interpretation";
+      });
+
+      challengeBtn.addEventListener("click", async () => {
+        const userText = (textarea.value || "").trim();
+        if (!userText) return;
+
+        challengeBtn.disabled = true;
+        challengeBtn.textContent = "Challenging AI…";
+        contestResponse.classList.add("hidden");
+        toggleUpdatedBtn.classList.add("hidden");
+        updatedInterpretationSection.classList.add("hidden");
+        aiResponseText.textContent = "";
+        resultNote.textContent = "";
+
+        try {
+          const result = await fetchContestResponse(data, interpretation, userText);
+          aiResponseText.textContent = result.ai_response || "No response returned.";
+          contestResponse.classList.remove("hidden");
+
+          if (result.interpretation_changed) {
+            resultNote.textContent = "The AI revised its interpretation after reviewing your argument.";
+            toggleUpdatedBtn.classList.remove("hidden");
+            updatedInterpretationSummaryText.textContent = result.updated_interpretation?.summary || "No updated summary available.";
+            updatedInterpretationSection.classList.add("hidden");
+            toggleUpdatedBtn.textContent = "Show updated interpretation";
+          } else {
+            resultNote.textContent = "The AI was not convinced by your argument and kept its original interpretation.";
+            toggleUpdatedBtn.classList.add("hidden");
+            updatedInterpretationSection.classList.add("hidden");
+          }
+        } catch (error) {
+          contestResponse.classList.remove("hidden");
+          resultNote.textContent = `Unable to contact the contest service: ${error?.message || error}`;
+          toggleUpdatedBtn.classList.add("hidden");
+          updatedInterpretationSection.classList.add("hidden");
+        } finally {
+          challengeBtn.disabled = false;
+          challengeBtn.textContent = "Challenge AI with my interpretation";
+        }
+      });
+
+      toggleUpdatedBtn.addEventListener("click", () => {
+        const isHidden = updatedInterpretationSection.classList.toggle("hidden");
+        toggleUpdatedBtn.textContent = isHidden ? "Show updated interpretation" : "Hide updated interpretation";
       });
 
       toggleBtn.addEventListener("click", () => {
@@ -166,6 +261,7 @@ export function loadAI(condition, interpretation, unlockAICallback) {
       altBtn.addEventListener("click", () => {
         altIndex += 1;
         altText.textContent = alts[altIndex % alts.length];
+        altText?.scrollIntoView({ behavior: "smooth" });
       });
 
       rawLink.addEventListener("click", (e) => {

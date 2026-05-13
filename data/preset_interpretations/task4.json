@@ -1,42 +1,35 @@
 {
-  "plan": "Identify the most recent three months of data (approximately February–April 2026), separate confirmed sales from unsold/asking listings, weight actual transactions most heavily, and apply the pre-set NM grade chart range of $34–$131. Frame evidence, assumptions, limitations, and alternative interpretations around that preset range given the dataset's wide internal spread.",
+  "summary_details": "The NM market for this collectible appears highly variable with a wide spread between lower-end routine sales and ambitious unsold listings. Confirmed sales range from roughly $31 to $127, with many successful transactions clustering between approximately $60 and $95. Higher unsold listings above $140 have not yet converted into sales, suggesting resistance at those levels. Current reasonable NM market value likely centers around the mid-to-upper double digits, while premium examples may occasionally achieve low triple-digit results.",
+  "plan": "Review all NM transactions chronologically, separate completed sales from unsold listings, identify common sale clusters and pricing ceilings, compare seller expectations to realized results, then estimate a cautious current NM range due to sparse and inconsistent data.",
   "reasoning_steps": [
-    "Step 1: Identify the most recent date in the dataset — 2026-04-15 — and define 'recent three months' as approximately February–April 2026.",
-    "Step 2: Filter for records within that window: IDs 18–25 (Feb 2 – Apr 15, 2026).",
-    "Step 3: Separate confirmed sales from unsold listings in the recent window. Only ID 21 (2026-03-15, eBay, $125.76, '5th pressing with inserts') is a confirmed sale. All others (IDs 18–20, 22–25) are unsold asking prices.",
-    "Step 4: The single confirmed recent sale at $125.76 falls within the pre-set NM ceiling of $131, anchoring the upper-mid range as achievable for desirable NM copies with inserts.",
-    "Step 5: Recent unsold asking prices range widely from $66.08 (Amazon, worn Spanish pressing) to $184.59 (Etsy, early UK pressing) — the majority of these have not cleared, suggesting the market does not support prices above ~$131 for most copies.",
-    "Step 6: Review broader historical confirmed sales (IDs 1–14) from May–November 2025. Confirmed sales ranged from $31.48 to $127.01, with the bulk falling between $46–$116. This strongly supports the pre-set floor of $34 and ceiling of $131.",
-    "Step 7: Note that Etsy unsold listings skew heavily high ($102–$184), likely reflecting speculative seller pricing rather than true market value. Amazon unsold listings skew low ($66–$72), possibly reflecting budget or incomplete copies.",
-    "Step 8: Apply the pre-set grade chart — NM: $34–$131. Only NM condition is present in the data; no other grades are reported."
+    "Step 1: Identify the conditions present in the dataset; only NM appears.",
+    "Step 2: Separate completed sales from unsold listings because realized transactions provide stronger market evidence.",
+    "Step 3: Observe that most completed sales cluster between approximately $60 and $95 despite a few lower and higher outliers.",
+    "Step 4: Note that the strongest confirmed sales reached approximately $116 to $127 on Ebay, indicating occasional premium demand.",
+    "Step 5: Compare unsold listings, many of which extend into the $140 to $185 range without selling, suggesting weaker buyer acceptance at those levels.",
+    "Step 6: Estimate a balanced current NM range that reflects both common realized prices and occasional stronger premium sales while accounting for uncertainty."
   ],
   "grade_chart": {
-    "NM": [34, 131]
+    "NM": [60, 125]
   },
-
-    "current_estimate": -1,
-    "current_high_range": -1,
-    "current_low_range": -1,
-    "current_trend": "steady",
-
   "evidence": [
-    "Thirteen confirmed NM sales from May–November 2025 ranged from $31.48 to $127.01, with the vast majority falling between $46 and $127 — directly validating the pre-set $34–$131 range as historically accurate.",
-    "The only confirmed sale in the recent three-month window (March 2026, eBay, 5th pressing with inserts) transacted at $125.76, near the top of the pre-set range and confirming the $131 ceiling remains achievable for well-described NM copies.",
-    "Multiple recent unsold listings priced above $131 (Etsy asking prices of $148–$184) have failed to clear, reinforcing that $131 functions as a practical market ceiling for NM copies outside of rare premium editions."
+    "Most confirmed NM sales occurred between roughly $60 and $95 across Amazon, Ebay, and Etsy.",
+    "The highest realized sales were $116.47 and $127.01 on Ebay, showing that stronger results are possible for select listings.",
+    "Multiple unsold NM listings between approximately $148 and $185 failed to convert, suggesting market resistance above the low-$100 range."
   ],
   "assumptions": [
-    "Unsold listings priced above $131 are assumed to reflect speculative or aspirational seller pricing rather than true market value, as none have resulted in confirmed transactions.",
-    "The wide internal spread within NM ($34–$131) is assumed to reflect genuine copy-level variation — inserts, pressing origin, edition type, and sleeve condition — rather than grade inconsistency.",
-    "The single confirmed recent sale ($125.76) is assumed to be representative of the upper end of current NM demand for desirable copies, not an outlier, given its consistency with the November 2025 eBay sale ($127.01)."
+    "All records represent the same pressing/version and similar completeness.",
+    "Completed sales better represent true market value than unsold listings.",
+    "Platform-specific demand differences do not fully distort the broader market trend."
   ],
   "limitations": [
-    "Only one confirmed sale exists in the most recent three-month window (Feb–Apr 2026), making current price estimates heavily dependent on historical 2025 sales data for validation.",
-    "The NM range of $34–$131 is exceptionally wide — nearly 4x from floor to ceiling — providing limited practical guidance for a collector trying to price or buy a specific copy without knowing its exact pressing details.",
-    "Several 'NM' listings include descriptions inconsistent with the grade (e.g., 'worn Spanish pressing', 'heavily used playable', 'gatefold worn sleeve'), suggesting grade inflation in parts of this dataset that could distort the low end of the range."
+    "The dataset is sparse and covers a short time period, increasing uncertainty in the estimated range.",
+    "No detailed information is provided about inserts, rarity factors, or exact pressing identifiers.",
+    "The large spread between low and high sales may reflect inconsistent grading or presentation quality."
   ],
   "alternative_interpretations": [
-    "The cluster of Etsy unsold listings priced $102–$184 may eventually clear as the market rises, suggesting the $131 ceiling could move upward in coming months — particularly for early UK pressings or sealed copies.",
-    "The low floor of $34 may be an artifact of early 2025 Amazon retail pricing rather than true secondary market value; the realistic collector floor for clean NM copies on peer-to-peer platforms may be closer to $60–$70 based on recent activity.",
-    "The divergence between Etsy asking prices ($66–$184) and eBay confirmed sales ($116–$127) may indicate platform-specific demand differences rather than a unified NM market — Etsy buyers and eBay buyers may represent distinct collector segments with different price tolerances."
+    "Higher unsold listings may indicate sellers anticipating future appreciation rather than current overpricing.",
+    "The stronger Ebay sales could reflect platform-specific bidding competition instead of broader market strength.",
+    "Lower early sales near $30 to $45 may represent unusually motivated sellers or incomplete copies despite the NM grade."
   ]
 }

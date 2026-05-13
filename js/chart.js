@@ -72,7 +72,7 @@ export function drawChart(data, item_name, currentTestIdx, ai_metrics, options) 
     .property("disabled", !aiUnlocked)
     .text(
       !aiUnlocked
-        ? "AI Price Estimate Locked"
+        ? "AI Estimate Locked Until Interpretation is Submitted"
         : aiVisible
         ? "Hide AI Price Estimate"
         : "Show AI Price Estimate"

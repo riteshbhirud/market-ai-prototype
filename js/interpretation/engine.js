@@ -120,13 +120,19 @@ export function normalizeInterpretation(raw, data) {
 
   return {
     summary: String(obj.summary || ""),
+    summary_details: String(obj.summary_details || ""),
     evidence: ensureArrayStrings(obj.evidence),
     assumptions: ensureArrayStrings(obj.assumptions),
     limitations: ensureArrayStrings(obj.limitations),
     alternatives: ensureArrayStrings(obj.alternatives ?? obj.alternative_interpretations),
+    alternative_interpretations: ensureArrayStrings(obj.alternatives ?? obj.alternative_interpretations),
     plan: String(obj.plan || ""),
     reasoning_steps: ensureArrayStrings(obj.reasoning_steps),
     grade_chart,
+    current_estimate: typeof obj.current_estimate === "number" ? obj.current_estimate : null,
+    current_high_range: typeof obj.current_high_range === "number" ? obj.current_high_range : null,
+    current_low_range: typeof obj.current_low_range === "number" ? obj.current_low_range : null,
+    current_trend: ["increasing", "decreasing", "steady"].includes(obj.current_trend) ? obj.current_trend : "steady",
     saleCount:
       typeof obj.saleCount === "number"
         ? obj.saleCount
@@ -311,6 +317,7 @@ export async function interpretRuleBased(data) {
 
   return {
     summary,
+    summary_details: "",
     evidence,
     assumptions,
     limitations,

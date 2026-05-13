@@ -96,7 +96,7 @@ async function render(data, item_name, test_idx, usePresetInterpretation = false
   currentAiGraphData = currentInterpretation?.grade_chart
 
   drawChart(currentData, currentName, currentTestIdx, currentAiGraphData, { showAI }); // re-render with AI prediction
-  loadAI(condition, currentInterpretation, unlockAICallback);
+  loadAI(condition, currentInterpretation, currentData, unlockAICallback);
 }
 
 function unlockAICallback(){
@@ -353,8 +353,8 @@ function setupRawTable(data) {
       visible = !visible;
       tableContainer.classList.toggle("hidden", !visible);
       toggleBtn.textContent = visible
-        ? "Hide transaction table"
-        : "Show raw transaction table";
+        ? "Hide Table of All Listings"
+        : "Show Table of All Listings";
       if (visible) renderTable();
     });
   }
@@ -384,52 +384,107 @@ function setupDataControls() {
   const container = document.getElementById("data-controls");
   if (!container) return;
 
-  const arrowLeft = `<span class="nav-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></span>`;
-  const arrowRight = `<span class="nav-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>`;
+  const arrowLeft = `
+    <span class="nav-arrow" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </span>
+  `;
 
-  const prevDisabled = currentTestIdx <= 0 ? "disabled" : "";
-  const nextDisabled = currentTestIdx >= preset_test_info.length - 1 ? "disabled" : "";
+  const arrowRight = `
+    <span class="nav-arrow" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </span>
+  `;
+
+  const isPrevDisabled = currentTestIdx <= 0;
+  const isNextDisabled = currentTestIdx >= preset_test_info.length - 1;
 
   container.innerHTML = `
-    <div class="data-source-label">Item <span class="item-counter">${currentTestIdx+1}</span> of ${preset_test_info.length}</div>
+    <div class="data-source-label">
+      Item <span class="item-counter">${currentTestIdx + 1}</span>
+      of ${preset_test_info.length}
+    </div>
+
     <div class="data-source-buttons">
-      <button type="button" class="${prevDisabled}" id="previous-test" aria-label="Previous item" data-tooltip="Previous item">${arrowLeft}</button>
-      <button type="button" class="${nextDisabled}" id="next-test" aria-label="Next item" data-tooltip="Next item">${arrowRight}</button>
+      <button
+        type="button"
+        class="${isPrevDisabled ? "disabled" : ""}"
+        id="previous-test"
+        aria-label="Previous item"
+        aria-disabled="${isPrevDisabled}"
+        data-tooltip="Previous item"
+      >
+        ${arrowLeft}
+      </button>
+
+      <button
+        type="button"
+        class="${isNextDisabled ? "disabled" : ""}"
+        id="next-test"
+        aria-label="Next item"
+        aria-disabled="${isNextDisabled}"
+        data-tooltip="Next item"
+      >
+        ${arrowRight}
+      </button>
     </div>
   `;
 
   preset_test_info.forEach((test, idx) => {
     const test_btn = document.getElementById(test["dom-elem-id"]);
-    if (test_btn) { // only add existing elements
-      test_btn.addEventListener("click", async () => {
-          const marketplace_item = await loadTestData("test_data/"+test.marketplace_item_filename);
-          if (test.interpretation_filename == "none") {
-            await render(marketplace_item, test.name, idx, false, "");
-          } else {
-            await render(marketplace_item, test.name, idx, true, test.interpretation_filename);
-          }
-        });
-      }
-    })
 
-  const prev_button = document.getElementById("previous-test")
+    if (test_btn) {
+      test_btn.addEventListener("click", async () => {
+        const marketplace_item = await loadTestData(
+          "test_data/" + test.marketplace_item_filename
+        );
+
+        if (test.interpretation_filename === "none") {
+          await render(
+            marketplace_item,
+            test.name,
+            idx,
+            false,
+            ""
+          );
+        } else {
+          await render(
+            marketplace_item,
+            test.name,
+            idx,
+            true,
+            test.interpretation_filename
+          );
+        }
+      });
+    }
+  });
+
+  const prev_button = document.getElementById("previous-test");
+
   if (prev_button) {
     prev_button.addEventListener("click", async () => {
-      await goToTestNumber((currentTestIdx-1)%preset_test_info.length)
+      if (currentTestIdx <= 0) return;
+
+      await goToTestNumber(currentTestIdx - 1);
     });
   }
 
-  const next_button = document.getElementById("next-test")
+  const next_button = document.getElementById("next-test");
+
   if (next_button) {
     next_button.addEventListener("click", async () => {
-      await goToTestNumber((currentTestIdx+1)%preset_test_info.length)
+      if (currentTestIdx >= preset_test_info.length - 1) return;
+
+      await goToTestNumber(currentTestIdx + 1);
     });
   }
-
-  // document.getElementById("gen-random").addEventListener("click", async () => {
-  //   const data = generateMarketData({ n: 18, seed: Date.now() % 1e6 });
-  //   await render(data, "Random Data", false, "");
-  // });
 }
 
 function setupConditionBadge() {
